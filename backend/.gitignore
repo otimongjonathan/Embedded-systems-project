@@ -1,0 +1,21 @@
+# Python virtual environment
+.venv/
+
+# Local data and database files
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Operating system files
+.DS_Store
+__MACOSX/
