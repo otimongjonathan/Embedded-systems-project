@@ -25,9 +25,9 @@ void storage_init(void) {
     s_mtx = xSemaphoreCreateMutex();
 
     sdmmc_host_t host = SDSPI_HOST_DEFAULT();
-    host.slot = SPI3_HOST;
+    host.slot = SPI2_HOST; // <--- CHANGED TO SPI2
     sdspi_device_config_t slot = SDSPI_DEVICE_CONFIG_DEFAULT();
-    slot.host_id = SPI3_HOST;
+    slot.host_id = SPI2_HOST; // <--- CHANGED TO SPI2
     slot.gpio_cs = PIN_SD_CS;
 
     esp_vfs_fat_sdmmc_mount_config_t cfg = {
@@ -55,19 +55,11 @@ void storage_load_schedule(int *start, int *end) {
     *start = -1; *end = -1;
     nvs_handle_t h;
     if (nvs_open("cocis", NVS_READONLY, &h) != ESP_OK) return;
-    int32_t s = 0, e = 0;
-        int32_t version = 0;
-        nvs_get_i32(h, "sched_start", &s);
-        nvs_get_i32(h, "sched_end",   &e);
-        esp_err_t version_err = nvs_get_i32(h, "sched_version", &version);
+    int32_t s = 7*60, e = 21*60;
+    nvs_get_i32(h, "sched_start", &s);
+    nvs_get_i32(h, "sched_end",   &e);
     *start = s; *end = e;
     nvs_close(h);
-
-        if (version_err != ESP_OK) {
-            if (s == 7 * 60 && e == 21 * 60) { s = 0; e = 0; }
-            storage_save_schedule(s, e);
-            *start = s; *end = e;
-        }
 }
 
 void storage_save_schedule(int start, int end) {
@@ -75,8 +67,7 @@ void storage_save_schedule(int start, int end) {
     if (nvs_open("cocis", NVS_READWRITE, &h) != ESP_OK) return;
     nvs_set_i32(h, "sched_start", start);
     nvs_set_i32(h, "sched_end",   end);
-        nvs_set_i32(h, "sched_version", 1);
-        nvs_commit(h);
+    nvs_commit(h);
     nvs_close(h);
 }
 

@@ -4,12 +4,14 @@
 #include "door.h"
 #include "storage.h"
 #include "comms.h"
+#include "lcd.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
 #include <string.h>
+#include <stdio.h>
 #include <time.h>
 
 static const char *TAG = "rfid";
@@ -37,6 +39,7 @@ typedef struct {
     spi_device_handle_t spi;
     gpio_num_t          rst;
     uint32_t            last_tag;
+    TickType_t          last_scan;
 } rc522_t;
 
 static rc522_t s_en, s_ex;
@@ -66,18 +69,11 @@ static esp_err_t rc522_read_fifo(rc522_t *d, uint8_t *buf, int count) {
     return err;
 }
 static void rc522_init(rc522_t *d, spi_device_handle_t spi, gpio_num_t rst) {
-    d->spi = spi; d->rst = rst; d->last_tag = 0;
+    d->spi = spi; d->rst = rst; d->last_tag = 0; d->last_scan = 0;
     gpio_set_direction(rst, GPIO_MODE_OUTPUT);
     gpio_set_level(rst, 0); vTaskDelay(pdMS_TO_TICKS(20));
     gpio_set_level(rst, 1); vTaskDelay(pdMS_TO_TICKS(50));
     rc522_w(d, REG_COMMAND, CMD_RESET); vTaskDelay(pdMS_TO_TICKS(50));
-    
-    // --- DIAGNOSTIC: Read the version register ---
-    uint8_t ver = rc522_r(d, 0x37);
-    ESP_LOGW(TAG, "RC522 on GPIO %d: version 0x%02X (expected 0x91 or 0x92)",
-             (int)rst, ver);
-    // ---------------------------------------------
-
     rc522_w(d, REG_T_MODE,      0x8D);
     rc522_w(d, REG_T_PRESCALER, 0x3E);
     rc522_w(d, REG_T_RELOAD_H,  30);
@@ -110,7 +106,7 @@ static int transceive(rc522_t *d, uint8_t *tx, int txlen, uint8_t fr,
     if (rx && rxlen) {
         int cap = *rxlen;
         int read_count = n < cap ? n : cap;
-        if (rc522_read_fifo(d, rx, read_count) != ESP_OK) return -3;
+        if (rc522_read_fifo(d, rx, read_count) != ESP_OK) return -2;
         *rxlen = n;
     }
     return 0;
@@ -121,13 +117,7 @@ static int read_uid(rc522_t *d, uint8_t uid[4]) {
     uint8_t ac[2] = { PICC_ANTICOLL1, 0x20 };
     uint8_t buf[5]; int bn = sizeof(buf);
     if (transceive(d, ac, 2, 0x00, buf, &bn, 40) != 0 || bn != 5) return -2;
-    uint8_t checksum = buf[0] ^ buf[1] ^ buf[2] ^ buf[3];
-    if (checksum != buf[4]) {
-        ESP_LOGE(TAG, "UID checksum mismatch: %02X:%02X:%02X:%02X "
-                 "(received %02X, expected %02X)",
-                 buf[0], buf[1], buf[2], buf[3], buf[4], checksum);
-        return -3;
-    }
+    if ((buf[0]^buf[1]^buf[2]^buf[3]) != buf[4]) return -3;
     memcpy(uid, buf, 4);
     return 0;
 }
@@ -152,14 +142,22 @@ static void handle_scan(rc522_t *d, bool is_entry) {
     
     int res = read_uid(d, uid);
     if (res != 0) {
-        if (res == -1) d->last_tag = 0;
+        if (res == -1) return;
+
+        static TickType_t last_err = 0;
+        TickType_t now = xTaskGetTickCount();
+        if (now - last_err > pdMS_TO_TICKS(3000)) {
+            ESP_LOGW(TAG, "RFID protocol read failed: %d", res);
+            last_err = now;
+        }
         return;
     }
     
     uint32_t tag = uid_to_u32(uid);
 
-    if (tag == d->last_tag) return;
-    d->last_tag = tag;
+    TickType_t now = xTaskGetTickCount();
+    if (tag == d->last_tag && (now - d->last_scan) < pdMS_TO_TICKS(SCAN_COOLDOWN_MS)) return;
+    d->last_tag = tag; d->last_scan = now;
 
     time_t t_now = time(NULL);
     result_t r = state_evaluate(tag, is_entry, t_now);
@@ -167,14 +165,33 @@ static void handle_scan(rc522_t *d, bool is_entry) {
     if (ok) door_open(is_entry);
     feedback(ok, r == RES_OK_AFTER_HOURS);
 
+    lcd_show_access(tag, is_entry, state_result_str(r));
+
     storage_log_event(t_now, tag, is_entry, state_result_str(r));
     comms_publish_event(tag, is_entry, state_result_str(r));
     comms_publish_occupancy(state_occupancy());
     state_persist();
 
-    ESP_LOGW(TAG, "RFID card %08lX on %s reader: %s",
-             (unsigned long)tag, is_entry ? "entry" : "exit",
-             state_result_str(r));
+    // --- PROFESSIONAL CONSOLE LOGGING ---
+    const char* msg = "Unknown";
+    switch (r) {
+        case RES_OK:                 msg = "Access Granted"; break;
+        case RES_OK_AFTER_HOURS:     msg = "Access Granted (After Hours)"; break;
+        case RES_DENIED_UNKNOWN:     msg = "Access Denied (Unknown Tag)"; break;
+        case RES_DENIED_SCHEDULE:    msg = "Access Denied (Outside Schedule)"; break;
+        case RES_DENIED_ALREADY_IN:  msg = "Access Denied (Already Inside)"; break;
+        case RES_DENIED_NOT_IN:      msg = "Access Denied (Not Inside)"; break;
+    }
+    
+    printf("RFID Card: %08lX | %s | %s\n",
+           (unsigned long)tag,
+           is_entry ? "ENTRY" : "EXIT",
+           msg);
+    fflush(stdout);
+
+    // Wait 3 seconds so the user can read the LCD, then reset to idle
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    lcd_update_idle(state_occupancy());
 }
 
 static void rfid_task(void *arg) {
@@ -187,25 +204,18 @@ static void rfid_task(void *arg) {
 
 void rfid_init(void) {
     spi_device_interface_config_t dcfg = {
-        // Lowered SPI speed to 1MHz to match Wokwi's simulator exactly
-        .clock_speed_hz = 1 * 1000 * 1000, .mode = 0, .queue_size = 1,
+        .clock_speed_hz = 1 * 1000 * 1000, // 1MHz for Wokwi stability
+        .mode = 0, 
+        .queue_size = 1,
     };
     spi_device_handle_t s;
 
     dcfg.spics_io_num = PIN_RFID_EN_CS;
-    esp_err_t err = spi_bus_add_device(SPI3_HOST, &dcfg, &s);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Entry reader SPI setup failed: %s", esp_err_to_name(err));
-        return;
-    }
+    spi_bus_add_device(SPI2_HOST, &dcfg, &s);
     rc522_init(&s_en, s, PIN_RFID_EN_RST);
 
     dcfg.spics_io_num = PIN_RFID_EX_CS;
-    err = spi_bus_add_device(SPI3_HOST, &dcfg, &s);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Exit reader SPI setup failed: %s", esp_err_to_name(err));
-        return;
-    }
+    spi_bus_add_device(SPI2_HOST, &dcfg, &s);
     rc522_init(&s_ex, s, PIN_RFID_EX_RST);
 
     gpio_config_t out = {

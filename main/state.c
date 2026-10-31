@@ -19,6 +19,9 @@ typedef struct {
 
 static state_data_t s;
 
+// Define the global lockdown flag
+bool g_lockdown_active = false; 
+
 const char *state_result_str(result_t r) {
     switch (r) {
         case RES_OK:                 return "OK";
@@ -32,7 +35,6 @@ const char *state_result_str(result_t r) {
 }
 
 static bool in_window(int mod) {
-    if (s.sched_start == s.sched_end) return true;
     return (s.sched_start <= s.sched_end)
          ? (mod >= s.sched_start && mod < s.sched_end)
          : (mod >= s.sched_start || mod < s.sched_end);
@@ -46,8 +48,8 @@ static int find_inside(uint32_t tag) {
 void state_init(void) {
     memset(&s, 0, sizeof(s));
     s.mtx = xSemaphoreCreateMutex();
-    s.sched_start = 0;
-    s.sched_end   = 0;
+    s.sched_start = 7 * 60;
+    s.sched_end   = 21 * 60;
 
     int st = -1, en = -1;
     storage_load_schedule(&st, &en);
@@ -106,6 +108,12 @@ void state_set_schedule(int start, int end) {
 }
 
 result_t state_evaluate(uint32_t tag, bool is_entry, time_t now) {
+    // --- LOCKDOWN OVERRIDE ---
+    if (g_lockdown_active) {
+        return RES_DENIED_SCHEDULE; // Deny all access during lockdown
+    }
+    // -------------------------
+
     struct tm tm; localtime_r(&now, &tm);
     int mod = tm.tm_hour * 60 + tm.tm_min;
     bool known = false;
@@ -148,7 +156,7 @@ bool state_admin_active(void) {
 }
 
 bool state_admin_login(const char *pin) {
-    if (strcmp(pin, "1234") != 0) return false; 
+    if (strcmp(pin, "1234") != 0) return false;
     xSemaphoreTake(s.mtx, portMAX_DELAY);
     s.admin = true; s.admin_since = time(NULL);
     xSemaphoreGive(s.mtx);

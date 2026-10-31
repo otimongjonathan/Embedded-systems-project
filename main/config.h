@@ -9,12 +9,18 @@
 #define PIN_RFID_EN_RST   4
 #define PIN_RFID_EX_CS   15
 #define PIN_RFID_EX_RST   2
-#define PIN_SD_CS        22
+#define PIN_SD_CS        16
 #define PIN_SERVO_EN     13
 #define PIN_SERVO_EX     33
 #define PIN_LED_GREEN    12
 #define PIN_LED_RED      14
 #define PIN_BUZZER       27
+
+/* Room Pins */
+#define PIN_PIR_R1       34
+#define PIN_LIGHT_R1     26
+#define PIN_PIR_R2       35
+#define PIN_LIGHT_R2     25
 
 /* Network */
 #define WIFI_SSID        "Wokwi-GUEST"
@@ -29,11 +35,12 @@
 #define TOPIC_ROOM1      "cocis/state/room1"
 #define TOPIC_ROOM2      "cocis/state/room2"
 
-/* Authorized tags */
-static const uint32_t AUTHORIZED_TAGS[] = { 0x01020304, 0x11223344, 0xA1B2C3D4 };
+/* Authorized tags (11:22:33:44) */
+static const uint32_t AUTHORIZED_TAGS[] = { 0x11223344, 0x01020304 };
 #define N_AUTH (sizeof(AUTHORIZED_TAGS)/sizeof(AUTHORIZED_TAGS[0]))
 
 /* Limits */
 #define INSIDE_MAX       16
 #define ADMIN_TTL_S      300
 #define DOOR_OPEN_MS     3000
+#define SCAN_COOLDOWN_MS 1500

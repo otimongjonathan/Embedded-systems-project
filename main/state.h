@@ -12,6 +12,8 @@ typedef enum {
     RES_DENIED_NOT_IN
 } result_t;
 
+extern bool g_lockdown_active; // <--- NEW: Global lockdown flag
+
 const char *state_result_str(result_t r);
 
 void state_init(void);
