@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.security import OAuth2PasswordRequestForm
 
 from .db import (audit, bump_config_version, get_db, get_setting, now_iso, set_setting,
                  sha256, verify_password, write_tx)
@@ -19,12 +20,11 @@ SESSION_HOURS = 8
 
 # ======================= AUTH ==============================================
 
-@router.post("/auth/login", tags=["Auth"])
-def login(body: Login, conn=Depends(get_db)):
-    admin = conn.execute("SELECT * FROM admins WHERE username = ?", (body.username,)).fetchone()
-    if not admin or not admin["is_active"] or not verify_password(body.password, admin["password_hash"]):
+def _issue_token(conn, username: str, password: str) -> dict:
+    admin = conn.execute("SELECT * FROM admins WHERE username = ?", (username,)).fetchone()
+    if not admin or not admin["is_active"] or not verify_password(password, admin["password_hash"]):
         with write_tx(conn):
-            audit(conn, "SYSTEM", None, "LOGIN_FAILED", {"username": body.username})
+            audit(conn, "SYSTEM", None, "LOGIN_FAILED", {"username": username})
         raise HTTPException(401, "Wrong username or password")
     token = secrets.token_urlsafe(32)
     expires = (datetime.now() + timedelta(hours=SESSION_HOURS)).isoformat(timespec="seconds")
@@ -34,6 +34,20 @@ def login(body: Login, conn=Depends(get_db)):
         audit(conn, "ADMIN", admin["id"], "LOGIN")
     return {"access_token": token, "token_type": "bearer", "expires_at": expires,
             "role": admin["role"], "full_name": admin["full_name"]}
+
+
+@router.post("/auth/login", tags=["Auth"])
+def login(body: Login, conn=Depends(get_db)):
+    """Log in with a JSON body and receive a bearer token (used by Postman and the firmware).
+    The example body is the demo account, so **Try it out** then **Execute** works as it is."""
+    return _issue_token(conn, body.username, body.password)
+
+
+@router.post("/auth/token", tags=["Auth"])
+def token(form: OAuth2PasswordRequestForm = Depends(), conn=Depends(get_db)):
+    """Form login used by the **Authorize** button in Swagger UI. Enter
+    `admin` / `Admin@CoCIS2026` there and every locked endpoint is then sent with the token."""
+    return _issue_token(conn, form.username, form.password)
 
 
 @router.post("/auth/logout", tags=["Auth"])

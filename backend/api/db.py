@@ -105,8 +105,8 @@ def init_db() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = connect()
     try:
-        conn.executescript(SCHEMA.read_text())
-        conn.executescript(SEED.read_text())
+        conn.executescript(SCHEMA.read_text(encoding="utf-8"))
+        conn.executescript(SEED.read_text(encoding="utf-8"))
         username, password, full_name, role = DEFAULT_ADMIN
         if not conn.execute("SELECT 1 FROM admins WHERE username = ?", (username,)).fetchone():
             conn.execute(

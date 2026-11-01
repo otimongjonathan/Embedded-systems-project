@@ -130,7 +130,6 @@ def test_viewer_cannot_change_schedule(client):
     conn = connect()
     conn.execute("INSERT OR IGNORE INTO admins(username, full_name, password_hash, role) VALUES (?,?,?,?)",
                  ("viewer", "Viewer", hash_password("viewer-pass"), "VIEWER"))
-    conn.commit()
     conn.close()
     token = client.post("/api/v1/auth/login", json={"username": "viewer", "password": "viewer-pass"}).json()
     r = client.put("/api/v1/schedule", headers={"Authorization": f"Bearer {token['access_token']}"},
@@ -182,3 +181,14 @@ def test_still_occupants_keep_lights_on(client):
         "event_uuid": "01-lr2-0005", "room_code": "LR2", "occupant_count": -1, "light_on": False,
         "trigger": "PERSON_OUT", "occurred_at": "2026-10-29T11:01:00"})
     assert bad.status_code == 422
+
+
+def test_swagger_form_login_and_root_redirect(client):
+    r = client.post("/api/v1/auth/token", data={"username": "admin", "password": "Admin@CoCIS2026"})
+    assert r.status_code == 200 and r.json()["token_type"] == "bearer"
+    me = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {r.json()['access_token']}"})
+    assert me.json()["role"] == "SUPER_ADMIN"
+    assert client.post("/api/v1/auth/token", data={"username": "admin", "password": "x"}).status_code == 401
+    assert client.get("/", follow_redirects=False).headers["location"] == "/docs"
+    schemes = client.get("/openapi.json").json()["components"]["securitySchemes"]
+    assert set(schemes) == {"AdminLogin", "DeviceKey"}

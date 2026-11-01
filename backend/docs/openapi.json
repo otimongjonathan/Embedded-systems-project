@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "CoCIS Smart Control & Monitoring API",
-    "description": "Database API for the ESP32 access-control, occupancy and lighting system (Embedded Systems coursework, Makerere University, 2026/2027).",
+    "description": "\nDatabase API for the ESP32 access-control, occupancy and lighting system\n(Embedded Systems coursework, Makerere University, 2026/2027).\n\n## How to test it here\n\n1. Click **Authorize** (top right, padlock icon).\n2. Under **AdminLogin** enter username `admin` and password `Admin@CoCIS2026`\n   (leave client_id and client_secret empty) and click **Authorize**.\n3. Under **DeviceKey** enter `esp32-demo-key-change-me` and click **Authorize**. Close the dialog.\n4. Open any endpoint, click **Try it out**, then **Execute**. The example bodies are ready to send.\n\nA good first run: `POST /api/v1/device/access/check` (Lisa Nyonyozi scans in),\nthen `GET /api/v1/occupancy` (she is listed as inside).\nChange `event_uuid` before sending a scan again: a repeated `event_uuid` is treated as a\nduplicate upload and returns the first answer with `\"duplicate\": true`.\n\n## Demo data\n\n| What | Value |\n|------|-------|\n| Admin login (SUPER_ADMIN) | `admin` / `Admin@CoCIS2026` |\n| ESP32 device key | `esp32-demo-key-change-me` |\n| RFID tags | `A1B2C3D4` student, `11223344` lecturer, `DEADBEEF` security, `CAFEBABE` visitor |\n| Opening hours | Mon to Fri 07:00 to 22:00, Sat 08:00 to 17:00, Sun closed |\n\nScans outside the opening hours are refused with `OUTSIDE_SCHEDULE`, so keep `occurred_at` on a weekday at 09:00.\n",
     "version": "1.0.0"
   },
   "paths": {
@@ -14,26 +14,15 @@
         "summary": "Access Check",
         "description": "Online path: the ESP32 sends a scan, the server decides, records it and\nanswers in one transaction. The ESP32 opens the door only on GRANTED.",
         "operationId": "access_check_api_v1_device_access_check_post",
-        "parameters": [
-          {
-            "name": "X-Device-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "X-Device-Key"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AccessCheck"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -54,7 +43,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
       }
     },
     "/api/v1/device/rooms/status": {
@@ -65,26 +59,15 @@
         "summary": "Room Status",
         "description": "A person crossed a lecture-room doorway (IR beams), or the lights changed.",
         "operationId": "room_status_api_v1_device_rooms_status_post",
-        "parameters": [
-          {
-            "name": "X-Device-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "X-Device-Key"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RoomStatus"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -105,7 +88,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
       }
     },
     "/api/v1/device/events/batch": {
@@ -116,26 +104,15 @@
         "summary": "Upload Batch",
         "description": "Offline path: records queued on the SD card while Wi-Fi was down.\nThe decision was already made by the ESP32, so we store it as-is.\nDuplicate event_uuids are skipped, so re-sending a batch is always safe.",
         "operationId": "upload_batch_api_v1_device_events_batch_post",
-        "parameters": [
-          {
-            "name": "X-Device-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "X-Device-Key"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/EventBatch"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -156,7 +133,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
       }
     },
     "/api/v1/device/config": {
@@ -167,17 +149,41 @@
         "summary": "Device Config",
         "description": "Everything the ESP32 caches on its SD card to decide offline.",
         "operationId": "device_config_api_v1_device_config_get",
-        "parameters": [
-          {
-            "name": "X-Device-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "X-Device-Key"
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
             }
           }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/device/heartbeat": {
+      "post": {
+        "tags": [
+          "Device (ESP32)"
         ],
+        "summary": "Heartbeat",
+        "description": "Periodic 'I am alive'. Reply tells the ESP32 whether to re-download config.",
+        "operationId": "heartbeat_api_v1_device_heartbeat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Heartbeat"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -197,37 +203,31 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
       }
     },
-    "/api/v1/device/heartbeat": {
+    "/api/v1/auth/login": {
       "post": {
         "tags": [
-          "Device (ESP32)"
+          "Auth"
         ],
-        "summary": "Heartbeat",
-        "description": "Periodic 'I am alive'. Reply tells the ESP32 whether to re-download config.",
-        "operationId": "heartbeat_api_v1_device_heartbeat_post",
-        "parameters": [
-          {
-            "name": "X-Device-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "X-Device-Key"
-            }
-          }
-        ],
+        "summary": "Login",
+        "description": "Log in with a JSON body and receive a bearer token (used by Postman and the firmware).\nThe example body is the demo account, so **Try it out** then **Execute** works as it is.",
+        "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Heartbeat"
+                "$ref": "#/components/schemas/Login"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -251,18 +251,19 @@
         }
       }
     },
-    "/api/v1/auth/login": {
+    "/api/v1/auth/token": {
       "post": {
         "tags": [
           "Auth"
         ],
-        "summary": "Login",
-        "operationId": "login_api_v1_auth_login_post",
+        "summary": "Token",
+        "description": "Form login used by the **Authorize** button in Swagger UI. Enter\n`admin` / `Admin@CoCIS2026` there and every locked endpoint is then sent with the token.",
+        "operationId": "token_api_v1_auth_token_post",
         "requestBody": {
           "content": {
-            "application/json": {
+            "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/Login"
+                "$ref": "#/components/schemas/Body_token_api_v1_auth_token_post"
               }
             }
           },
@@ -297,17 +298,6 @@
         ],
         "summary": "Logout",
         "operationId": "logout_api_v1_auth_logout_post",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -316,18 +306,13 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/auth/me": {
@@ -337,17 +322,6 @@
         ],
         "summary": "Me",
         "operationId": "me_api_v1_auth_me_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -356,18 +330,13 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/users": {
@@ -377,6 +346,11 @@
         ],
         "summary": "List Users",
         "operationId": "list_users_api_v1_users_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "q",
@@ -425,15 +399,6 @@
               ],
               "title": "Active"
             }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
           }
         ],
         "responses": {
@@ -463,15 +428,9 @@
         ],
         "summary": "Create User",
         "operationId": "create_user_api_v1_users_post",
-        "parameters": [
+        "security": [
           {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
+            "AdminLogin": []
           }
         ],
         "requestBody": {
@@ -513,6 +472,11 @@
         ],
         "summary": "Get User",
         "operationId": "get_user_api_v1_users__user_id__get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "user_id",
@@ -521,15 +485,6 @@
             "schema": {
               "type": "integer",
               "title": "User Id"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
             }
           }
         ],
@@ -560,6 +515,11 @@
         ],
         "summary": "Update User",
         "operationId": "update_user_api_v1_users__user_id__patch",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "user_id",
@@ -568,15 +528,6 @@
             "schema": {
               "type": "integer",
               "title": "User Id"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
             }
           }
         ],
@@ -618,6 +569,11 @@
         "summary": "Deactivate User",
         "description": "Soft delete: the tag stops working but history is kept for the records.",
         "operationId": "deactivate_user_api_v1_users__user_id__delete",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "user_id",
@@ -626,15 +582,6 @@
             "schema": {
               "type": "integer",
               "title": "User Id"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
             }
           }
         ],
@@ -667,17 +614,6 @@
         ],
         "summary": "Occupancy",
         "operationId": "occupancy_api_v1_occupancy_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -686,18 +622,13 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/access-events": {
@@ -707,6 +638,11 @@
         ],
         "summary": "Access Events",
         "operationId": "access_events_api_v1_access_events_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "from",
@@ -810,15 +746,6 @@
               "default": 0,
               "title": "Offset"
             }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
           }
         ],
         "responses": {
@@ -850,6 +777,11 @@
         ],
         "summary": "Visits",
         "operationId": "visits_api_v1_visits_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "date",
@@ -883,15 +815,6 @@
               ],
               "title": "User Id"
             }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
           }
         ],
         "responses": {
@@ -923,17 +846,6 @@
         ],
         "summary": "Rooms",
         "operationId": "rooms_api_v1_rooms_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -942,18 +854,13 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/rooms/{code}/history": {
@@ -963,6 +870,11 @@
         ],
         "summary": "Room History",
         "operationId": "room_history_api_v1_rooms__code__history_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "code",
@@ -988,15 +900,6 @@
                 }
               ],
               "title": "Date"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
             }
           }
         ],
@@ -1030,6 +933,11 @@
         "summary": "Set Light Mode",
         "description": "Manual override, e.g. force LR1 lights off during a power-saving period.\nAUTO returns control to the IR beam occupancy counter. The ESP32 picks this up on its next config pull.",
         "operationId": "set_light_mode_api_v1_rooms__code__light_mode_put",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "code",
@@ -1038,15 +946,6 @@
             "schema": {
               "type": "string",
               "title": "Code"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
             }
           }
         ],
@@ -1089,17 +988,6 @@
         ],
         "summary": "Get Schedule",
         "operationId": "get_schedule_api_v1_schedule_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1108,18 +996,13 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       },
       "put": {
         "tags": [
@@ -1127,26 +1010,15 @@
         ],
         "summary": "Put Schedule",
         "operationId": "put_schedule_api_v1_schedule_put",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ScheduleUpdate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1167,7 +1039,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/settings": {
@@ -1177,17 +1054,6 @@
         ],
         "summary": "Get Settings",
         "operationId": "get_settings_api_v1_settings_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1196,18 +1062,13 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       },
       "patch": {
         "tags": [
@@ -1215,26 +1076,15 @@
         ],
         "summary": "Patch Settings",
         "operationId": "patch_settings_api_v1_settings_patch",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SettingsUpdate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1255,7 +1105,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/settings/emergency": {
@@ -1266,26 +1121,15 @@
         "summary": "Emergency",
         "description": "Fire / evacuation: unlock every door regardless of schedule.",
         "operationId": "emergency_api_v1_settings_emergency_put",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/EmergencyUpdate"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -1306,7 +1150,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/reports/daily": {
@@ -1316,6 +1165,11 @@
         ],
         "summary": "Daily Report",
         "operationId": "daily_report_api_v1_reports_daily_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "date",
@@ -1332,15 +1186,6 @@
                 }
               ],
               "title": "Date"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
             }
           }
         ],
@@ -1373,17 +1218,6 @@
         ],
         "summary": "Devices",
         "operationId": "devices_api_v1_devices_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1392,18 +1226,13 @@
                 "schema": {}
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
-        }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
       }
     },
     "/api/v1/audit-log": {
@@ -1413,6 +1242,11 @@
         ],
         "summary": "Audit Log",
         "operationId": "audit_log_api_v1_audit_log_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
         "parameters": [
           {
             "name": "limit",
@@ -1423,15 +1257,6 @@
               "maximum": 1000,
               "default": 100,
               "title": "Limit"
-            }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
             }
           }
         ],
@@ -1504,14 +1329,18 @@
               "ENTRY",
               "EXIT"
             ],
-            "title": "Door"
+            "title": "Door",
+            "examples": [
+              "ENTRY"
+            ]
           },
           "occurred_at": {
             "type": "string",
             "format": "date-time",
             "title": "Occurred At",
+            "description": "Must fall inside the schedule, e.g. a weekday at 09:00",
             "examples": [
-              "2026-10-30T08:15:02"
+              "2026-10-30T09:00:00"
             ]
           }
         },
@@ -1524,17 +1353,82 @@
         ],
         "title": "AccessCheck"
       },
+      "Body_token_api_v1_auth_token_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_token_api_v1_auth_token_post"
+      },
       "EmergencyUpdate": {
         "properties": {
           "enabled": {
             "type": "boolean",
-            "title": "Enabled"
+            "title": "Enabled",
+            "examples": [
+              true
+            ]
           },
           "reason": {
             "type": "string",
             "maxLength": 200,
             "minLength": 3,
-            "title": "Reason"
+            "title": "Reason",
+            "examples": [
+              "Fire drill"
+            ]
           }
         },
         "type": "object",
@@ -1590,7 +1484,10 @@
                 "type": "null"
               }
             ],
-            "title": "Firmware Version"
+            "title": "Firmware Version",
+            "examples": [
+              "1.0.0"
+            ]
           },
           "ip_address": {
             "anyOf": [
@@ -1601,7 +1498,10 @@
                 "type": "null"
               }
             ],
-            "title": "Ip Address"
+            "title": "Ip Address",
+            "examples": [
+              "10.13.37.2"
+            ]
           },
           "free_heap": {
             "anyOf": [
@@ -1612,7 +1512,10 @@
                 "type": "null"
               }
             ],
-            "title": "Free Heap"
+            "title": "Free Heap",
+            "examples": [
+              182000
+            ]
           },
           "sd_free_kb": {
             "anyOf": [
@@ -1623,7 +1526,10 @@
                 "type": "null"
               }
             ],
-            "title": "Sd Free Kb"
+            "title": "Sd Free Kb",
+            "examples": [
+              950000
+            ]
           },
           "pending_events": {
             "anyOf": [
@@ -1635,7 +1541,10 @@
               }
             ],
             "title": "Pending Events",
-            "default": 0
+            "default": 0,
+            "examples": [
+              0
+            ]
           }
         },
         "type": "object",
@@ -1650,7 +1559,10 @@
               "FORCE_ON",
               "FORCE_OFF"
             ],
-            "title": "Mode"
+            "title": "Mode",
+            "examples": [
+              "AUTO"
+            ]
           }
         },
         "type": "object",
@@ -1663,11 +1575,17 @@
         "properties": {
           "username": {
             "type": "string",
-            "title": "Username"
+            "title": "Username",
+            "examples": [
+              "admin"
+            ]
           },
           "password": {
             "type": "string",
-            "title": "Password"
+            "title": "Password",
+            "examples": [
+              "Admin@CoCIS2026"
+            ]
           }
         },
         "type": "object",
@@ -1702,14 +1620,18 @@
               "ENTRY",
               "EXIT"
             ],
-            "title": "Door"
+            "title": "Door",
+            "examples": [
+              "ENTRY"
+            ]
           },
           "occurred_at": {
             "type": "string",
             "format": "date-time",
             "title": "Occurred At",
+            "description": "Must fall inside the schedule, e.g. a weekday at 09:00",
             "examples": [
-              "2026-10-30T08:15:02"
+              "2026-10-30T09:00:00"
             ]
           },
           "decision": {
@@ -1718,7 +1640,10 @@
               "GRANTED",
               "DENIED"
             ],
-            "title": "Decision"
+            "title": "Decision",
+            "examples": [
+              "GRANTED"
+            ]
           },
           "reason": {
             "type": "string",
@@ -1731,7 +1656,10 @@
               "NOT_INSIDE",
               "EMERGENCY_OPEN"
             ],
-            "title": "Reason"
+            "title": "Reason",
+            "examples": [
+              "OK"
+            ]
           }
         },
         "type": "object",
@@ -1751,7 +1679,10 @@
             "type": "string",
             "maxLength": 64,
             "minLength": 8,
-            "title": "Event Uuid"
+            "title": "Event Uuid",
+            "examples": [
+              "01-R00001"
+            ]
           },
           "room_code": {
             "type": "string",
@@ -1759,18 +1690,27 @@
               "LR1",
               "LR2"
             ],
-            "title": "Room Code"
+            "title": "Room Code",
+            "examples": [
+              "LR1"
+            ]
           },
           "occupant_count": {
             "type": "integer",
             "maximum": 1000.0,
             "minimum": 0.0,
             "title": "Occupant Count",
-            "description": "People in the room, from the IR beam counter"
+            "description": "People in the room, from the IR beam counter",
+            "examples": [
+              12
+            ]
           },
           "light_on": {
             "type": "boolean",
-            "title": "Light On"
+            "title": "Light On",
+            "examples": [
+              true
+            ]
           },
           "trigger": {
             "type": "string",
@@ -1782,12 +1722,18 @@
               "SCHEDULE",
               "EMERGENCY"
             ],
-            "title": "Trigger"
+            "title": "Trigger",
+            "examples": [
+              "PERSON_IN"
+            ]
           },
           "occurred_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Occurred At"
+            "title": "Occurred At",
+            "examples": [
+              "2026-10-30T09:05:00"
+            ]
           }
         },
         "type": "object",
@@ -1808,21 +1754,33 @@
             "maximum": 6.0,
             "minimum": 0.0,
             "title": "Day Of Week",
-            "description": "0 = Sunday \u2026 6 = Saturday"
+            "description": "0 = Sunday to 6 = Saturday",
+            "examples": [
+              1
+            ]
           },
           "is_open": {
             "type": "boolean",
-            "title": "Is Open"
+            "title": "Is Open",
+            "examples": [
+              true
+            ]
           },
           "open_time": {
             "type": "string",
             "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
-            "title": "Open Time"
+            "title": "Open Time",
+            "examples": [
+              "07:00"
+            ]
           },
           "close_time": {
             "type": "string",
             "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
-            "title": "Close Time"
+            "title": "Close Time",
+            "examples": [
+              "22:00"
+            ]
           }
         },
         "type": "object",
@@ -1865,7 +1823,10 @@
                 "type": "null"
               }
             ],
-            "title": "Light Off Delay S"
+            "title": "Light Off Delay S",
+            "examples": [
+              30
+            ]
           },
           "heartbeat_interval_s": {
             "anyOf": [
@@ -1878,7 +1839,10 @@
                 "type": "null"
               }
             ],
-            "title": "Heartbeat Interval S"
+            "title": "Heartbeat Interval S",
+            "examples": [
+              60
+            ]
           }
         },
         "type": "object",
@@ -1889,13 +1853,19 @@
           "rfid_uid": {
             "type": "string",
             "pattern": "^[0-9A-Fa-f]{8,20}$",
-            "title": "Rfid Uid"
+            "title": "Rfid Uid",
+            "examples": [
+              "99AA88BB"
+            ]
           },
           "full_name": {
             "type": "string",
             "maxLength": 100,
             "minLength": 2,
-            "title": "Full Name"
+            "title": "Full Name",
+            "examples": [
+              "Test Student"
+            ]
           },
           "reg_number": {
             "anyOf": [
@@ -1906,7 +1876,10 @@
                 "type": "null"
               }
             ],
-            "title": "Reg Number"
+            "title": "Reg Number",
+            "examples": [
+              "24/U/0001"
+            ]
           },
           "email": {
             "anyOf": [
@@ -1917,7 +1890,10 @@
                 "type": "null"
               }
             ],
-            "title": "Email"
+            "title": "Email",
+            "examples": [
+              "test.student@students.mak.ac.ug"
+            ]
           },
           "phone": {
             "anyOf": [
@@ -1951,7 +1927,10 @@
                 "type": "null"
               }
             ],
-            "title": "Department"
+            "title": "Department",
+            "examples": [
+              "Computer Science"
+            ]
           }
         },
         "type": "object",
@@ -2104,6 +2083,24 @@
           "type"
         ],
         "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "DeviceKey": {
+        "type": "apiKey",
+        "description": "ESP32 device key. Demo value: esp32-demo-key-change-me",
+        "in": "header",
+        "name": "X-Device-Key"
+      },
+      "AdminLogin": {
+        "type": "oauth2",
+        "description": "Management login. Demo account: admin / Admin@CoCIS2026",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/token"
+          }
+        }
       }
     }
   }
