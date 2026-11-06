@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoCIS Smart System Dashboard</title>
+  <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+<!-- Login screen -->
+<section id="login-view" class="login-wrap" hidden>
+  <form id="login-form" class="card login-card" autocomplete="on">
+    <h1>CoCIS Smart System</h1>
+    <p class="muted">Access control, occupancy and lighting. Staff login.</p>
+    <label>Username
+      <input id="login-user" name="username" placeholder="admin" required autocomplete="username">
+    </label>
+    <label>Password
+      <input id="login-pass" name="password" type="password" placeholder="Admin@CoCIS2026" required
+             autocomplete="current-password">
+    </label>
+    <button type="submit" class="btn primary">Log in</button>
+    <p id="login-error" class="msg error" hidden></p>
+    <p class="hint">Demo account: <code>admin</code> / <code>Admin@CoCIS2026</code></p>
+  </form>
+</section>
+
+<!-- Main dashboard -->
+<div id="app-view" hidden>
+  <header class="topbar">
+    <div class="brand">CoCIS Smart System</div>
+    <div class="who">
+      <span id="who-name"></span>
+      <span id="who-role" class="badge"></span>
+      <button id="logout-btn" class="btn small">Log out</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="overview" class="active">Overview</button>
+    <button data-tab="schedule">Schedule</button>
+    <button data-tab="users">Users</button>
+    <button data-tab="reports">Reports</button>
+    <button data-tab="audit">Audit log</button>
+    <button data-tab="database">Database</button>
+  </nav>
+
+  <main>
+    <div id="emergency-banner" class="banner" hidden>
+      EMERGENCY MODE IS ON: all doors are unlocked.
+    </div>
+    <p id="global-msg" class="msg" hidden></p>
+
+    <!-- Overview -->
+    <section id="tab-overview" class="tab">
+      <div class="row-head">
+        <h2>Live overview</h2>
+        <span class="muted small">Updates every 3 seconds. Last update: <span id="as-of">never</span></span>
+      </div>
+
+      <div class="grid">
+        <div class="card stat">
+          <div class="stat-label">People inside</div>
+          <div class="stat-value" id="people-count">0</div>
+        </div>
+        <div class="card" id="emergency-card">
+          <h3>Emergency mode</h3>
+          <p>Status: <strong id="emergency-state">OFF</strong></p>
+          <button id="emergency-btn" class="btn danger">Turn emergency ON</button>
+        </div>
+      </div>
+
+      <h3>Lecture rooms</h3>
+      <div class="grid" id="rooms"></div>
+
+      <h3>Controller status</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Device</th><th>Status</th><th>Last seen</th><th>Pending events</th><th>Firmware</th><th>IP address</th></tr></thead>
+          <tbody id="devices-body"></tbody>
+        </table>
+      </div>
+
+      <h3>People inside the building</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Time in</th></tr></thead>
+          <tbody id="people-body"></tbody>
+        </table>
+      </div>
+
+      <h3>Recent access events</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Name</th><th>Tag</th><th>Door</th><th>Decision</th><th>Reason</th><th>Source</th></tr></thead>
+          <tbody id="events-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Schedule -->
+    <section id="tab-schedule" class="tab" hidden>
+      <h2>Opening hours</h2>
+      <p class="muted">Scans outside these hours are refused. Only a SUPER_ADMIN can save changes.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Day</th><th>Open</th><th>Opens at</th><th>Closes at</th></tr></thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button id="schedule-save" class="btn primary">Save schedule</button>
+        <button id="schedule-reload" class="btn">Reload</button>
+      </div>
+      <p id="schedule-msg" class="msg" hidden></p>
+    </section>
+
+    <!-- Users -->
+    <section id="tab-users" class="tab" hidden>
+      <h2>Tag holders</h2>
+      <form id="user-form" class="card form-grid">
+        <h3 class="full">Register a new tag holder</h3>
+        <label>RFID tag (hex)<input name="rfid_uid" required placeholder="99AA88BB" pattern="[0-9A-Fa-f]{8,20}"></label>
+        <label>Full name<input name="full_name" required minlength="2" placeholder="Test Student"></label>
+        <label>Registration number<input name="reg_number" placeholder="24/U/0001"></label>
+        <label>Email<input name="email" type="email" placeholder="name@students.mak.ac.ug"></label>
+        <label>Phone<input name="phone" placeholder="0700000000"></label>
+        <label>Role
+          <select name="role">
+            <option>STUDENT</option><option>STAFF</option><option>LECTURER</option>
+            <option>SECURITY</option><option>VISITOR</option>
+          </select>
+        </label>
+        <label>Department<input name="department" placeholder="Computer Science"></label>
+        <div class="full actions"><button type="submit" class="btn primary">Register</button></div>
+        <p id="user-msg" class="msg full" hidden></p>
+      </form>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Tag</th><th>Reg. number</th><th>Role</th><th>Department</th><th>Status</th><th></th></tr></thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Reports -->
+    <section id="tab-reports" class="tab" hidden>
+      <h2>Daily report</h2>
+      <div class="actions">
+        <label class="inline">Date <input type="date" id="report-date"></label>
+        <button id="report-load" class="btn primary">Show report</button>
+      </div>
+      <p id="report-msg" class="msg" hidden></p>
+      <div id="report-out" hidden>
+        <div class="grid">
+          <div class="card stat"><div class="stat-label">Entries</div><div class="stat-value" id="r-entries">0</div></div>
+          <div class="card stat"><div class="stat-label">Exits</div><div class="stat-value" id="r-exits">0</div></div>
+          <div class="card stat"><div class="stat-label">Denied</div><div class="stat-value" id="r-denied">0</div></div>
+          <div class="card stat"><div class="stat-label">Unique visitors</div><div class="stat-value" id="r-unique">0</div></div>
+          <div class="card stat"><div class="stat-label">Peak occupancy</div><div class="stat-value" id="r-peak">0</div>
+            <div class="muted small" id="r-peak-at"></div></div>
+        </div>
+        <h3>Denied scans by reason</h3>
+        <div class="table-wrap">
+          <table><thead><tr><th>Reason</th><th>Count</th></tr></thead><tbody id="r-denied-body"></tbody></table>
+        </div>
+        <h3>Lighting energy per room</h3>
+        <div class="table-wrap">
+          <table><thead><tr><th>Room</th><th>Lights on (hours)</th><th>Energy (kWh)</th></tr></thead><tbody id="r-light-body"></tbody></table>
+        </div>
+        <div class="card chart-card">
+          <h3>Energy used (kWh)</h3>
+          <div id="r-chart"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Audit log -->
+    <section id="tab-audit" class="tab" hidden>
+      <div class="row-head">
+        <h2>Audit log</h2>
+        <button id="audit-reload" class="btn small">Reload</button>
+      </div>
+      <p class="muted">The latest 50 actions. Only a SUPER_ADMIN can see this.</p>
+      <p id="audit-msg" class="msg" hidden></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Details</th></tr></thead>
+          <tbody id="audit-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Database viewer -->
+    <section id="tab-database" class="tab" hidden>
+      <div class="row-head">
+        <h2>Database</h2>
+        <button id="db-refresh" class="btn small primary">Refresh</button>
+      </div>
+      <p class="muted">The real rows stored in the SQLite database, newest first. New rows are highlighted. Only a SUPER_ADMIN can see this.</p>
+      <div class="db-controls">
+        <label>Table <select id="db-table"></select></label>
+        <label class="check"><input type="checkbox" id="db-auto" checked> Auto-refresh every 3 s</label>
+        <span id="db-info" class="muted"></span>
+      </div>
+      <p id="db-msg" class="msg" hidden></p>
+      <div class="table-wrap">
+        <table>
+          <thead id="db-head"></thead>
+          <tbody id="db-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="app.js?v=3"></script>
+</body>
+</html>

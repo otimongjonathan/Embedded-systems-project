@@ -3,3 +3,7 @@ data/
 __pycache__/
 .pytest_cache/
 ~$*
+simulator/sd/
+reference-firmware/build/
+reference-firmware/sdkconfig
+.DS_Store

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1000" viewBox="0 0 1700 1000" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs>
+<style>.t{font-size:24px;font-weight:700;fill:#0f172a}.h{font-size:19px;font-weight:700;fill:#0f172a}.b{font-size:16px;fill:#1e293b}.s{font-size:14px;fill:#475569}.l{font-size:14px;font-weight:700}</style>
+<rect width="1700" height="1000" fill="#fff"/>
+<text x="850.0" y="44" text-anchor="middle" style="font-size:28px;font-weight:700;fill:#0f172a">Network view: how the controllers reach the API and the database</text>
+<rect x="30" y="80" width="440" height="820" rx="16" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+<text x="250.0" y="114" text-anchor="middle" class="t">1. Wokwi (cloud)</text>
+<text x="250.0" y="138" text-anchor="middle" class="s">simulated ESP32 boards, Wi-Fi Wokwi-GUEST</text>
+<rect x="620" y="80" width="380" height="820" rx="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+<text x="810.0" y="114" text-anchor="middle" class="t">2. Internet</text>
+<text x="810.0" y="138" text-anchor="middle" class="s">public services</text>
+<rect x="1150" y="80" width="520" height="820" rx="16" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+<text x="1410.0" y="114" text-anchor="middle" class="t">3. Laptop or college server</text>
+<text x="1410.0" y="138" text-anchor="middle" class="s">runs start.bat and bridge.bat; database stays here</text>
+<rect x="55" y="160" width="390" height="186" rx="10" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+<text x="71" y="188" class="h">Entrance ESP32 (group firmware)</text>
+<text x="71" y="212" class="b">MFRC522 readers, servos, LCD,</text>
+<text x="71" y="233" class="b">SD card, PIR rooms</text>
+<text x="71" y="254" class="b">Decides every scan itself</text>
+<text x="71" y="275" class="b">MQTT client: esp-mqtt</text>
+<text x="71" y="296" class="b">Publishes JSON to cocis/...</text>
+<text x="71" y="317" class="b">Listens on cocis/cmd/entrance</text>
+<rect x="55" y="490" width="390" height="144" rx="10" fill="#fff" stroke="#0891b2" stroke-width="2"/>
+<text x="71" y="518" class="h">Reference HTTP ESP32 (optional)</text>
+<text x="71" y="542" class="b">IR beam rooms, offline queue</text>
+<text x="71" y="563" class="b">HTTP client: esp_http_client</text>
+<text x="71" y="584" class="b">Calls /api/v1/device/... directly</text>
+<text x="71" y="605" class="b">Needs a tunnel to reach the laptop</text>
+<rect x="650" y="160" width="320" height="207" rx="10" fill="#fff" stroke="#64748b" stroke-width="2"/>
+<text x="666" y="188" class="h">MQTT broker</text>
+<text x="666" y="212" class="b">broker.hivemq.com : 1883</text>
+<text x="666" y="233" class="b">Topics:</text>
+<text x="666" y="254" class="b">  cocis/event/access</text>
+<text x="666" y="275" class="b">  cocis/state/occupancy</text>
+<text x="666" y="296" class="b">  cocis/state/room1, room2</text>
+<text x="666" y="317" class="b">  cocis/config/schedule</text>
+<text x="666" y="338" class="b">  cocis/cmd/entrance</text>
+<rect x="650" y="540" width="320" height="123" rx="10" fill="#fff" stroke="#64748b" stroke-width="2"/>
+<text x="666" y="568" class="h">Tunnel (optional)</text>
+<text x="666" y="592" class="b">ngrok or Cloudflare Tunnel</text>
+<text x="666" y="613" class="b">public https address for</text>
+<text x="666" y="634" class="b">the laptop&#x27;s API</text>
+<rect x="1175" y="160" width="470" height="123" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<text x="1191" y="188" class="h">MQTT bridge (bridge/mqtt_bridge.py)</text>
+<text x="1191" y="212" class="b">Subscribes to the ESP32&#x27;s topics</text>
+<text x="1191" y="233" class="b">Turns each message into an API call</text>
+<text x="1191" y="254" class="b">Sends lockdown back as MQTT</text>
+<rect x="1175" y="400" width="470" height="144" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<text x="1191" y="428" class="h">REST API (FastAPI, port 8000)</text>
+<text x="1191" y="452" class="b">Device endpoints: X-Device-Key</text>
+<text x="1191" y="473" class="b">  /device/relay, /device/access/check ...</text>
+<text x="1191" y="494" class="b">Staff endpoints: login token and roles</text>
+<text x="1191" y="515" class="b">Validates every body with Pydantic models</text>
+<rect x="1175" y="660" width="220" height="125" rx="10" fill="#fdf4ff" stroke="#a21caf" stroke-width="2"/>
+<text x="1191" y="688" class="h">SQLite database</text>
+<text x="1191" y="712" class="b">data/cocis.db</text>
+<text x="1191" y="733" class="b">11 tables, 2 views</text>
+<rect x="1425" y="660" width="220" height="125" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<text x="1441" y="688" class="h">Browser</text>
+<text x="1441" y="712" class="b">Dashboard, Swagger UI</text>
+<text x="1441" y="733" class="b">Virtual ESP32 (CLI)</text>
+<path d="M445,230 L650,230" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#a)"/>
+<text x="547" y="205" text-anchor="middle" class="l" fill="#2563eb">MQTT publish</text>
+<text x="547" y="223" text-anchor="middle" class="l" fill="#2563eb">JSON over Wi-Fi</text>
+<path d="M970,230 L1175,230" fill="none" stroke="#7c3aed" stroke-width="3" marker-end="url(#a)"/>
+<text x="1072" y="205" text-anchor="middle" class="l" fill="#7c3aed">MQTT subscribe</text>
+<text x="1072" y="223" text-anchor="middle" class="l" fill="#7c3aed">laptop connects out</text>
+<path d="M1175,280 L970,340" fill="none" stroke="#7c3aed" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a)"/>
+<text x="1072" y="330" text-anchor="middle" class="l" fill="#7c3aed">LOCKDOWN /</text>
+<text x="1072" y="348" text-anchor="middle" class="l" fill="#7c3aed">UNLOCK</text>
+<path d="M650,380 L445,330" fill="none" stroke="#2563eb" stroke-width="3" stroke-dasharray="9 6" marker-end="url(#a)"/>
+<text x="547" y="385" text-anchor="middle" class="l" fill="#2563eb">command</text>
+<path d="M1410,283 L1410,400" fill="none" stroke="#7c3aed" stroke-width="3" marker-end="url(#a)"/>
+<text x="1530" y="350" text-anchor="middle" class="l" fill="#7c3aed">HTTP POST /device/relay</text>
+<path d="M1285,544 L1285,660" fill="none" stroke="#a21caf" stroke-width="3" marker-end="url(#a)"/>
+<text x="1315" y="610" text-anchor="middle" class="l" fill="#a21caf">SQL</text>
+<path d="M1535,660 L1535,544" fill="none" stroke="#7c3aed" stroke-width="3" marker-end="url(#a)"/>
+<text x="1600" y="610" text-anchor="middle" class="l" fill="#7c3aed">HTTP + token</text>
+<path d="M445,580 L650,600" fill="none" stroke="#0891b2" stroke-width="3" marker-end="url(#a)"/>
+<text x="547" y="570" text-anchor="middle" class="l" fill="#0891b2">HTTPS</text>
+<path d="M970,600 L1175,500" fill="none" stroke="#0891b2" stroke-width="3" marker-end="url(#a)"/>
+<text x="1072" y="590" text-anchor="middle" class="l" fill="#0891b2">HTTP to :8000</text>
+<rect x="55" y="700" width="390" height="160" rx="10" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+<text x="75" y="732" class="h">Same network? No.</text>
+<text x="75" y="756" class="b">Both the ESP32 and the laptop open an</text>
+<text x="75" y="780" class="b">outward connection to the broker, so</text>
+<text x="75" y="804" class="b">no router setup is needed. Only the</text>
+<text x="75" y="828" class="b">bridge and the API touch the database.</text>
+</svg>

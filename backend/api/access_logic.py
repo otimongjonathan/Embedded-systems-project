@@ -100,7 +100,7 @@ def apply_room_status(conn, *, event_uuid, room, occupant_count, light_on, trigg
     )
     conn.execute(
         "UPDATE rooms SET occupant_count = ?, is_occupied = ?, light_on = ?, updated_at = ?, "
-        "last_activity_at = CASE WHEN ? IN ('PERSON_IN','PERSON_OUT') THEN ? ELSE last_activity_at END "
+        "last_activity_at = CASE WHEN ? IN ('PERSON_IN','PERSON_OUT','MOTION','NO_MOTION') THEN ? ELSE last_activity_at END "
         "WHERE id = ? AND (updated_at IS NULL OR updated_at <= ?)",
         (occupant_count, is_occupied, int(light_on), occurred_at, trigger, occurred_at, room["id"], occurred_at),
     )

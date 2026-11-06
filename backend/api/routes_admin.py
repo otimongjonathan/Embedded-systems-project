@@ -139,7 +139,8 @@ def occupancy(admin=Depends(current_admin), conn=Depends(get_db)):
         "SELECT code, name, occupant_count, is_occupied, light_on, light_mode, last_activity_at, updated_at "
         "FROM rooms WHERE room_type = 'LECTURE_ROOM' ORDER BY code")]
     return {"people_inside_count": len(people), "people_inside": people, "rooms": rooms,
-            "emergency_mode": get_setting(conn, "emergency_mode") == "true", "as_of": now_iso()}
+            "emergency_mode": get_setting(conn, "emergency_mode") == "true",
+            "lockdown_mode": get_setting(conn, "lockdown_mode") == "true", "as_of": now_iso()}
 
 
 @router.get("/access-events", tags=["Occupancy"])
@@ -259,6 +260,18 @@ def emergency(body: EmergencyUpdate, admin=Depends(require_role("SECURITY")), co
     return {"emergency_mode": body.enabled, "config_version": version}
 
 
+@router.put("/settings/lockdown", tags=["Schedule & Settings"])
+def lockdown(body: EmergencyUpdate, admin=Depends(require_role("SECURITY")), conn=Depends(get_db)):
+    """Security threat: lock every door. The MQTT bridge sends this to the entrance
+    controller as its own LOCKDOWN / UNLOCK command within a few seconds."""
+    with write_tx(conn):
+        set_setting(conn, "lockdown_mode", "true" if body.enabled else "false")
+        version = bump_config_version(conn)
+        audit(conn, "ADMIN", admin["id"], "LOCKDOWN_ON" if body.enabled else "LOCKDOWN_OFF",
+              {"reason": body.reason})
+    return {"lockdown_mode": body.enabled, "config_version": version}
+
+
 # ======================= REPORTS & ADMINISTRATION ==========================
 
 @router.get("/reports/daily", tags=["Reports"])
@@ -345,3 +358,34 @@ def devices(admin=Depends(current_admin), conn=Depends(get_db)):
 def audit_log(limit: int = Query(100, le=1000), admin=Depends(require_role("SUPER_ADMIN")),
               conn=Depends(get_db)):
     return [dict(r) for r in conn.execute("SELECT * FROM audit_log ORDER BY id DESC LIMIT ?", (limit,))]
+
+
+# ======================= DATABASE VIEWER ===================================
+
+# Tables and views the dashboard may show, with the newest rows first.
+# Secret columns (hashes of passwords, tokens and device keys) are never returned.
+VIEWABLE = {
+    "access_events": "id DESC", "building_visits": "id DESC", "room_status_logs": "id DESC",
+    "rooms": "id", "users": "id", "access_schedule": "day_of_week", "system_settings": "key",
+    "devices": "id", "admins": "id", "audit_log": "id DESC",
+    "v_people_inside": "time_in DESC", "v_daily_access_summary": "day DESC",
+}
+SECRET_COLUMNS = {"password_hash", "token_hash", "api_key_hash"}
+
+
+@router.get("/db/tables", tags=["Database viewer"])
+def db_tables(admin=Depends(require_role("SUPER_ADMIN")), conn=Depends(get_db)):
+    """Tables and views that the dashboard's Database tab can show, with their row counts."""
+    return [{"name": t, "rows": conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]} for t in VIEWABLE]
+
+
+@router.get("/db/{table}", tags=["Database viewer"])
+def db_rows(table: str, limit: int = Query(20, ge=1, le=200),
+            admin=Depends(require_role("SUPER_ADMIN")), conn=Depends(get_db)):
+    """Read-only view of the latest rows of one table, for showing that events are stored."""
+    if table not in VIEWABLE:
+        raise HTTPException(404, "Unknown table")
+    columns = [r["name"] for r in conn.execute(f"PRAGMA table_info({table})") if r["name"] not in SECRET_COLUMNS]
+    rows = conn.execute(f"SELECT {', '.join(columns)} FROM {table} ORDER BY {VIEWABLE[table]} LIMIT ?", (limit,))
+    total = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+    return {"table": table, "columns": columns, "rows": [list(r) for r in rows], "total": total}

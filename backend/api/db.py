@@ -1,6 +1,7 @@
 """Database access: connection handling, initialisation and small helpers."""
 import hashlib
 import json
+import re
 import os
 import secrets
 import sqlite3
@@ -15,7 +16,10 @@ SEED = ROOT / "database" / "seed.sql"
 
 # Demo credentials: change them before any real deployment.
 DEFAULT_ADMIN = ("admin", "Admin@CoCIS2026", "System Administrator", "SUPER_ADMIN")
-DEFAULT_DEVICE = ("ESP32-CTRL-01", "esp32-demo-key-change-me")
+DEFAULT_DEVICES = [
+    ("ESP32-CTRL-01", "esp32-demo-key-change-me"),        # HTTP firmware and the virtual ESP32
+    ("ESP32-MQTT-ENTRANCE", "mqtt-bridge-key-change-me"), # MQTT controller, through bridge/mqtt_bridge.py
+]
 
 
 def now_iso() -> str:
@@ -101,11 +105,35 @@ def audit(conn, actor_type: str, actor_id: int | None, action: str, details: dic
     )
 
 
+def upgrade_tables(conn: sqlite3.Connection) -> None:
+    """Databases made before the MQTT bridge have narrower CHECK rules on two tables.
+    Rebuild each such table from its current definition in schema.sql, keeping every row
+    (the table-rebuild procedure from the SQLite documentation)."""
+    schema = SCHEMA.read_text(encoding="utf-8")
+    rebuilt = False
+    for table, marker in (("access_events", "'MQTT'"), ("room_status_logs", "'MOTION'")):
+        row = conn.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?", (table,)).fetchone()
+        if not row or marker in row[0]:
+            continue
+        create = re.search(rf"CREATE TABLE IF NOT EXISTS {table} \(.*?\n\);", schema, re.S).group(0)
+        create = create.replace(f"IF NOT EXISTS {table}", f"{table}_new")
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.executescript(
+            f"BEGIN; DROP VIEW IF EXISTS v_people_inside; DROP VIEW IF EXISTS v_daily_access_summary; "
+            f"{create} INSERT INTO {table}_new SELECT * FROM {table}; DROP TABLE {table}; "
+            f"ALTER TABLE {table}_new RENAME TO {table}; COMMIT;")
+        conn.execute("PRAGMA foreign_keys = ON")
+        rebuilt = True
+    if rebuilt:
+        conn.executescript(schema)   # recreate the indexes and views
+
+
 def init_db() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = connect()
     try:
         conn.executescript(SCHEMA.read_text(encoding="utf-8"))
+        upgrade_tables(conn)
         conn.executescript(SEED.read_text(encoding="utf-8"))
         username, password, full_name, role = DEFAULT_ADMIN
         if not conn.execute("SELECT 1 FROM admins WHERE username = ?", (username,)).fetchone():
@@ -113,10 +141,10 @@ def init_db() -> None:
                 "INSERT INTO admins(username, full_name, password_hash, role) VALUES (?, ?, ?, ?)",
                 (username, full_name, hash_password(password), role),
             )
-        code, key = DEFAULT_DEVICE
-        conn.execute(
-            "INSERT OR IGNORE INTO devices(device_code, api_key_hash) VALUES (?, ?)",
-            (code, sha256(key)),
-        )
+        for code, key in DEFAULT_DEVICES:
+            conn.execute(
+                "INSERT OR IGNORE INTO devices(device_code, api_key_hash) VALUES (?, ?)",
+                (code, sha256(key)),
+            )
     finally:
         conn.close()

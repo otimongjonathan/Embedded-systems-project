@@ -1,0 +1,18 @@
+==================================================================
+  CoCIS MQTT bridge   broker broker.hivemq.com:1883  ->  API http://127.0.0.1:8000/api/v1
+  Every scan, room change, occupancy and schedule message is stored in the database.
+==================================================================
+[mqtt] connected to broker.hivemq.com:1883, listening on cocis/event/access,
+       cocis/state/occupancy, cocis/state/room1, cocis/state/room2, cocis/config/schedule
+[old]   cocis/config/schedule: retained message from an earlier run, ignored
+[scan]  19:21:33  ENTRY 11223344  GRANTED OK  -> access_events (stored)
+[count] entrance ESP32 reports 1 inside; database: 5 inside in total (all controllers)
+[scan]  19:21:45  ENTRY 01020304  GRANTED OK  -> access_events (stored)
+[scan]  19:21:47  ENTRY 01020304  DENIED ALREADY_INSIDE  -> access_events (stored)
+[scan]  19:21:48  ENTRY DEADBEEF  DENIED UNKNOWN_TAG  -> access_events (stored)
+[room]  LR1  OCCUPIED, lights ON  -> room_status_logs (stored)
+[user]  card AABBCCDD was authorised on the ESP32: registered in users
+[scan]  19:21:53  ENTRY AABBCCDD  GRANTED OK  -> access_events (stored)
+[room]  LR1  vacant, lights off  -> room_status_logs (stored)
+[scan]  19:21:57  EXIT  11223344  GRANTED OK  -> access_events (stored)
+[count] entrance ESP32 reports 2 inside; database: 4 inside in total (all controllers)

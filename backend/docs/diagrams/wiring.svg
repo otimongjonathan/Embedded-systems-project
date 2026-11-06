@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1060" viewBox="0 0 1600 1060" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<style>.n{font-size:19px;font-weight:700;fill:#0f172a}.d{font-size:15px;fill:#475569}.p{font-size:15px;font-weight:700}.h{font-size:22px;font-weight:700;fill:#0f172a}</style>
+<rect width="1600" height="1060" fill="#fff"/>
+<text x="800.0" y="46" text-anchor="middle" style="font-size:28px;font-weight:700;fill:#0f172a">Entrance and rooms controller: parts and ESP32 pins</text>
+<text x="250" y="112" text-anchor="middle" class="h">Main entrance</text>
+<text x="1350" y="112" text-anchor="middle" class="h">Storage, lecture rooms, communication</text>
+<rect x="650" y="140" width="300" height="780" rx="16" fill="#1e293b"/>
+<text x="800.0" y="514.0" text-anchor="middle" style="font-size:30px;font-weight:700;fill:#fff">ESP32</text>
+<text x="800.0" y="546.0" text-anchor="middle" style="font-size:17px;fill:#cbd5e1">DevKitC V4, ESP-IDF, FreeRTOS</text>
+<rect x="60" y="150" width="400" height="74" rx="10" fill="#f8fafc" stroke="#2563eb" stroke-width="2.5"/>
+<text x="78" y="181" class="n">MFRC522 reader: entry</text>
+<text x="78" y="206" class="d">CS (SDA) and RST</text>
+<line x1="460" y1="187.0" x2="650" y2="187.0" stroke="#2563eb" stroke-width="3"/>
+<circle cx="650" cy="187.0" r="6" fill="#2563eb"/>
+<text x="555.0" y="178.0" text-anchor="middle" class="p" fill="#2563eb">GPIO 5, GPIO 4</text>
+<rect x="60" y="248" width="400" height="74" rx="10" fill="#f8fafc" stroke="#2563eb" stroke-width="2.5"/>
+<text x="78" y="279" class="n">MFRC522 reader: exit</text>
+<text x="78" y="304" class="d">CS (SDA) and RST</text>
+<line x1="460" y1="285.0" x2="650" y2="285.0" stroke="#2563eb" stroke-width="3"/>
+<circle cx="650" cy="285.0" r="6" fill="#2563eb"/>
+<text x="555.0" y="276.0" text-anchor="middle" class="p" fill="#2563eb">GPIO 15, GPIO 2</text>
+<rect x="60" y="346" width="400" height="74" rx="10" fill="#f8fafc" stroke="#ea580c" stroke-width="2.5"/>
+<text x="78" y="377" class="n">Entry door servo</text>
+<text x="78" y="402" class="d">PWM 50 Hz, LEDC channel 0</text>
+<line x1="460" y1="383.0" x2="650" y2="383.0" stroke="#ea580c" stroke-width="3"/>
+<circle cx="650" cy="383.0" r="6" fill="#ea580c"/>
+<text x="555.0" y="374.0" text-anchor="middle" class="p" fill="#ea580c">GPIO 13</text>
+<rect x="60" y="444" width="400" height="74" rx="10" fill="#f8fafc" stroke="#ea580c" stroke-width="2.5"/>
+<text x="78" y="475" class="n">Exit door servo</text>
+<text x="78" y="500" class="d">PWM 50 Hz, LEDC channel 1</text>
+<line x1="460" y1="481.0" x2="650" y2="481.0" stroke="#ea580c" stroke-width="3"/>
+<circle cx="650" cy="481.0" r="6" fill="#ea580c"/>
+<text x="555.0" y="472.0" text-anchor="middle" class="p" fill="#ea580c">GPIO 33</text>
+<rect x="60" y="542" width="400" height="74" rx="10" fill="#f8fafc" stroke="#16a34a" stroke-width="2.5"/>
+<text x="78" y="573" class="n">Green LED</text>
+<text x="78" y="598" class="d">access granted</text>
+<line x1="460" y1="579.0" x2="650" y2="579.0" stroke="#16a34a" stroke-width="3"/>
+<circle cx="650" cy="579.0" r="6" fill="#16a34a"/>
+<text x="555.0" y="570.0" text-anchor="middle" class="p" fill="#16a34a">GPIO 12</text>
+<rect x="60" y="640" width="400" height="74" rx="10" fill="#f8fafc" stroke="#dc2626" stroke-width="2.5"/>
+<text x="78" y="671" class="n">Red LED</text>
+<text x="78" y="696" class="d">access denied</text>
+<line x1="460" y1="677.0" x2="650" y2="677.0" stroke="#dc2626" stroke-width="3"/>
+<circle cx="650" cy="677.0" r="6" fill="#dc2626"/>
+<text x="555.0" y="668.0" text-anchor="middle" class="p" fill="#dc2626">GPIO 14</text>
+<rect x="60" y="738" width="400" height="74" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="2.5"/>
+<text x="78" y="769" class="n">Buzzer</text>
+<text x="78" y="794" class="d">short beep OK, long beep denied</text>
+<line x1="460" y1="775.0" x2="650" y2="775.0" stroke="#475569" stroke-width="3"/>
+<circle cx="650" cy="775.0" r="6" fill="#475569"/>
+<text x="555.0" y="766.0" text-anchor="middle" class="p" fill="#475569">GPIO 27</text>
+<rect x="60" y="836" width="400" height="74" rx="10" fill="#f8fafc" stroke="#0891b2" stroke-width="2.5"/>
+<text x="78" y="867" class="n">LCD 16x2 (address 0x27)</text>
+<text x="78" y="892" class="d">SDA GPIO 21, SCL GPIO 22</text>
+<line x1="460" y1="873.0" x2="650" y2="873.0" stroke="#0891b2" stroke-width="3"/>
+<circle cx="650" cy="873.0" r="6" fill="#0891b2"/>
+<text x="555.0" y="864.0" text-anchor="middle" class="p" fill="#0891b2">I2C</text>
+<rect x="1140" y="150" width="400" height="74" rx="10" fill="#f8fafc" stroke="#334155" stroke-width="2.5"/>
+<text x="1158" y="181" class="n">Shared SPI bus: readers and SD</text>
+<text x="1158" y="206" class="d">SCK 18, MISO 19, MOSI 23</text>
+<line x1="950" y1="187.0" x2="1140" y2="187.0" stroke="#334155" stroke-width="3"/>
+<circle cx="950" cy="187.0" r="6" fill="#334155"/>
+<text x="1045.0" y="178.0" text-anchor="middle" class="p" fill="#334155">SPI</text>
+<rect x="1140" y="248" width="400" height="74" rx="10" fill="#f8fafc" stroke="#b45309" stroke-width="2.5"/>
+<text x="1158" y="279" class="n">microSD card: access.csv</text>
+<text x="1158" y="304" class="d">chip select</text>
+<line x1="950" y1="285.0" x2="1140" y2="285.0" stroke="#b45309" stroke-width="3"/>
+<circle cx="950" cy="285.0" r="6" fill="#b45309"/>
+<text x="1045.0" y="276.0" text-anchor="middle" class="p" fill="#b45309">GPIO 16</text>
+<rect x="1140" y="346" width="400" height="74" rx="10" fill="#f8fafc" stroke="#16a34a" stroke-width="2.5"/>
+<text x="1158" y="377" class="n">PIR sensor: Lecture Room 1</text>
+<text x="1158" y="402" class="d">motion output</text>
+<line x1="950" y1="383.0" x2="1140" y2="383.0" stroke="#16a34a" stroke-width="3"/>
+<circle cx="950" cy="383.0" r="6" fill="#16a34a"/>
+<text x="1045.0" y="374.0" text-anchor="middle" class="p" fill="#16a34a">GPIO 34</text>
+<rect x="1140" y="444" width="400" height="74" rx="10" fill="#f8fafc" stroke="#ca8a04" stroke-width="2.5"/>
+<text x="1158" y="475" class="n">Light: Lecture Room 1</text>
+<text x="1158" y="500" class="d">LED</text>
+<line x1="950" y1="481.0" x2="1140" y2="481.0" stroke="#ca8a04" stroke-width="3"/>
+<circle cx="950" cy="481.0" r="6" fill="#ca8a04"/>
+<text x="1045.0" y="472.0" text-anchor="middle" class="p" fill="#ca8a04">GPIO 26</text>
+<rect x="1140" y="542" width="400" height="74" rx="10" fill="#f8fafc" stroke="#16a34a" stroke-width="2.5"/>
+<text x="1158" y="573" class="n">PIR sensor: Lecture Room 2</text>
+<text x="1158" y="598" class="d">motion output</text>
+<line x1="950" y1="579.0" x2="1140" y2="579.0" stroke="#16a34a" stroke-width="3"/>
+<circle cx="950" cy="579.0" r="6" fill="#16a34a"/>
+<text x="1045.0" y="570.0" text-anchor="middle" class="p" fill="#16a34a">GPIO 35</text>
+<rect x="1140" y="640" width="400" height="74" rx="10" fill="#f8fafc" stroke="#ca8a04" stroke-width="2.5"/>
+<text x="1158" y="671" class="n">Light: Lecture Room 2</text>
+<text x="1158" y="696" class="d">LED</text>
+<line x1="950" y1="677.0" x2="1140" y2="677.0" stroke="#ca8a04" stroke-width="3"/>
+<circle cx="950" cy="677.0" r="6" fill="#ca8a04"/>
+<text x="1045.0" y="668.0" text-anchor="middle" class="p" fill="#ca8a04">GPIO 25</text>
+<rect x="1140" y="738" width="400" height="74" rx="10" fill="#f8fafc" stroke="#7c3aed" stroke-width="2.5"/>
+<text x="1158" y="769" class="n">Serial monitor</text>
+<text x="1158" y="794" class="d">console menu, 115200 baud</text>
+<line x1="950" y1="775.0" x2="1140" y2="775.0" stroke="#7c3aed" stroke-width="3"/>
+<circle cx="950" cy="775.0" r="6" fill="#7c3aed"/>
+<text x="1045.0" y="766.0" text-anchor="middle" class="p" fill="#7c3aed">UART0</text>
+<rect x="1140" y="836" width="400" height="74" rx="10" fill="#f8fafc" stroke="#7c3aed" stroke-width="2.5"/>
+<text x="1158" y="867" class="n">Wi-Fi</text>
+<text x="1158" y="892" class="d">Wokwi-GUEST, MQTT to the broker</text>
+<line x1="950" y1="873.0" x2="1140" y2="873.0" stroke="#7c3aed" stroke-width="3"/>
+<circle cx="950" cy="873.0" r="6" fill="#7c3aed"/>
+<text x="1045.0" y="864.0" text-anchor="middle" class="p" fill="#7c3aed">radio</text>
+<text x="800.0" y="1014" text-anchor="middle" class="d">Both RFID readers and the SD card share one SPI bus (SPI2); each has its own chip-select pin. Every part shares 3.3 V and GND.</text>
+<text x="800.0" y="1040" text-anchor="middle" class="d">Pins from main/config.h and diagram.json of the entrance firmware.</text>
+</svg>

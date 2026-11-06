@@ -1,8 +1,10 @@
-"""Generates seq_online.svg and seq_offline.svg (run: python3 make_sequences.py)."""
+"""Generates the sequence diagrams seq_*.svg (run: python3 make_sequences.py)."""
 from html import escape
 
 COL = {"User": "#0f172a", "RFID reader": "#2563eb", "ESP32": "#334155", "SD card": "#d97706",
-       "REST API": "#7c3aed", "SQLite DB": "#a21caf", "Door / LCD": "#16a34a"}
+       "REST API": "#7c3aed", "SQLite DB": "#a21caf", "Door / LCD": "#16a34a",
+       "MFRC522": "#2563eb", "MQTT broker": "#64748b", "Bridge": "#6d28d9", "Dashboard": "#0891b2",
+       "PIR sensor": "#16a34a", "Staff": "#0f172a"}
 
 
 def render(title, parts, steps, path, width=1800):
@@ -90,3 +92,36 @@ render("Offline operation and store-and-forward synchronisation",
     ("msg", "REST API", "ESP32", "schedule, authorised_tags, light modes", "reply"),
     ("msg", "ESP32", "SD card", "overwrite users.csv, schedule.csv"),
 ], "seq_offline.svg", width=1500)
+
+
+render("Entrance scan: from the card to the database and dashboard",
+       ["User", "MFRC522", "ESP32", "SD card", "MQTT broker", "Bridge", "REST API", "SQLite DB"], [
+    ("msg", "User", "MFRC522", "taps card at the ENTRY reader"),
+    ("msg", "MFRC522", "ESP32", "UID 11223344 (SPI, rfid task)"),
+    ("note", "ESP32", "state_evaluate(): authorised? schedule?|already inside? (under the state mutex)"),
+    ("msg", "ESP32", "User", "door opens 3 s, green LED, beep, LCD", "reply"),
+    ("msg", "ESP32", "SD card", "append access.csv (storage mutex)"),
+    ("msg", "ESP32", "MQTT broker", "publish cocis/event/access|{tag, dir: IN, result: OK, ts}"),
+    ("msg", "ESP32", "MQTT broker", "publish cocis/state/occupancy {count} (retained)"),
+    ("msg", "MQTT broker", "Bridge", "deliver to subscriber"),
+    ("note", "Bridge", "convert: OK to GRANTED / OK|event_uuid MQ-11223344-IN-<ts>"),
+    ("msg", "Bridge", "REST API", "POST /device/relay|(X-Device-Key)"),
+    ("msg", "REST API", "SQLite DB", "INSERT access_events|+ visit, COMMIT"),
+    ("msg", "REST API", "Bridge", "200 {accepted: [uuid]}", "reply"),
+    ("note", "REST API", "dashboard refreshes every 3 s:|the person appears under People inside"),
+], "seq_mqtt_scan.svg", width=1900)
+
+render("Room lighting and lockdown messages",
+       ["PIR sensor", "ESP32", "MQTT broker", "Bridge", "REST API", "Staff"], [
+    ("msg", "PIR sensor", "ESP32", "motion (room_lights task, every 100 ms)"),
+    ("note", "ESP32", "light ON; after 5 s with no motion: OFF"),
+    ("msg", "ESP32", "MQTT broker", "publish cocis/state/room1|{occupied, lights, ts} (retained)"),
+    ("msg", "MQTT broker", "Bridge", "deliver"),
+    ("msg", "Bridge", "REST API", "POST /device/relay (MOTION)"),
+    ("note", "REST API", "rooms (live) + room_status_logs (history)"),
+    ("divider", "Dashboard to controller: lockdown"),
+    ("msg", "Staff", "REST API", "PUT /api/v1/settings/lockdown {enabled: true}"),
+    ("msg", "Bridge", "REST API", "polls every 2 s: lockdown_mode changed"),
+    ("msg", "Bridge", "MQTT broker", "publish cocis/cmd/entrance LOCKDOWN (retained)"),
+    ("msg", "MQTT broker", "ESP32", "deliver: lockdown flag set|(after the 18-character fix)"),
+], "seq_mqtt_room.svg", width=1700)

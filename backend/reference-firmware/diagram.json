@@ -1,0 +1,492 @@
+{
+  "version": 1,
+  "author": "CoCIS group (Lisa Nyonyozi and team)",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd2004",
+      "id": "lcd",
+      "top": -250,
+      "left": 170,
+      "attrs": {
+        "pins": "i2c"
+      }
+    },
+    {
+      "type": "wokwi-microsd-card",
+      "id": "sd",
+      "top": 60,
+      "left": 260,
+      "rotate": 90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "card",
+      "top": 230,
+      "left": -330,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "tapIn",
+      "top": 330,
+      "left": -330,
+      "attrs": {
+        "color": "green",
+        "label": "Tap ENTRY",
+        "key": "1"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "tapOut",
+      "top": 400,
+      "left": -330,
+      "attrs": {
+        "color": "red",
+        "label": "Tap EXIT",
+        "key": "2"
+      }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "doorIn",
+      "top": -10,
+      "left": -400,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "doorOut",
+      "top": 100,
+      "left": -400,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledGreen",
+      "top": -60,
+      "left": 330,
+      "attrs": {
+        "color": "limegreen",
+        "label": "Granted"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledRed",
+      "top": -60,
+      "left": 380,
+      "attrs": {
+        "color": "red",
+        "label": "Denied"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer",
+      "top": -80,
+      "left": 430,
+      "attrs": {
+        "volume": "0.2"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "lr1A",
+      "top": 330,
+      "left": 260,
+      "attrs": {
+        "color": "blue",
+        "label": "LR1 beam A",
+        "key": "q"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "lr1B",
+      "top": 330,
+      "left": 360,
+      "attrs": {
+        "color": "blue",
+        "label": "LR1 beam B",
+        "key": "w"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "lr1Light",
+      "top": 250,
+      "left": 470,
+      "attrs": {
+        "color": "yellow",
+        "label": "LR1 lights"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "lr2A",
+      "top": 430,
+      "left": 260,
+      "attrs": {
+        "color": "black",
+        "label": "LR2 beam A",
+        "key": "a"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "lr2B",
+      "top": 430,
+      "left": 360,
+      "attrs": {
+        "color": "black",
+        "label": "LR2 beam B",
+        "key": "s"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "lr2Light",
+      "top": 350,
+      "left": 470,
+      "attrs": {
+        "color": "yellow",
+        "label": "LR2 lights"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 10,
+      "left": 320,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 10,
+      "left": 370,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": 320,
+      "left": 460,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r4",
+      "top": 420,
+      "left": 460,
+      "rotate": 90,
+      "attrs": {
+        "value": "220"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "esp:TX",
+      "$serialMonitor:RX",
+      "",
+      []
+    ],
+    [
+      "esp:RX",
+      "$serialMonitor:TX",
+      "",
+      []
+    ],
+    [
+      "lcd:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "lcd:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "lcd:SDA",
+      "esp:21",
+      "green",
+      []
+    ],
+    [
+      "lcd:SCL",
+      "esp:22",
+      "orange",
+      []
+    ],
+    [
+      "sd:GND",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "sd:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "sd:DI",
+      "esp:23",
+      "green",
+      []
+    ],
+    [
+      "sd:DO",
+      "esp:19",
+      "blue",
+      []
+    ],
+    [
+      "sd:SCK",
+      "esp:18",
+      "orange",
+      []
+    ],
+    [
+      "sd:CS",
+      "esp:5",
+      "purple",
+      []
+    ],
+    [
+      "card:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "card:VCC",
+      "esp:3V3",
+      "red",
+      []
+    ],
+    [
+      "card:SIG",
+      "esp:34",
+      "violet",
+      []
+    ],
+    [
+      "tapIn:1.l",
+      "esp:32",
+      "green",
+      []
+    ],
+    [
+      "tapIn:2.l",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "tapOut:1.l",
+      "esp:33",
+      "red",
+      []
+    ],
+    [
+      "tapOut:2.l",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "doorIn:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "doorIn:V+",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "doorIn:PWM",
+      "esp:26",
+      "orange",
+      []
+    ],
+    [
+      "doorOut:GND",
+      "esp:GND.1",
+      "black",
+      []
+    ],
+    [
+      "doorOut:V+",
+      "esp:5V",
+      "red",
+      []
+    ],
+    [
+      "doorOut:PWM",
+      "esp:27",
+      "orange",
+      []
+    ],
+    [
+      "ledGreen:A",
+      "r1:1",
+      "green",
+      []
+    ],
+    [
+      "r1:2",
+      "esp:25",
+      "green",
+      []
+    ],
+    [
+      "ledGreen:C",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "ledRed:A",
+      "r2:1",
+      "red",
+      []
+    ],
+    [
+      "r2:2",
+      "esp:4",
+      "red",
+      []
+    ],
+    [
+      "ledRed:C",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "buzzer:1",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "buzzer:2",
+      "esp:12",
+      "red",
+      []
+    ],
+    [
+      "lr1A:1.l",
+      "esp:13",
+      "blue",
+      []
+    ],
+    [
+      "lr1A:2.l",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "lr1B:1.l",
+      "esp:14",
+      "blue",
+      []
+    ],
+    [
+      "lr1B:2.l",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "lr2A:1.l",
+      "esp:16",
+      "gray",
+      []
+    ],
+    [
+      "lr2A:2.l",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "lr2B:1.l",
+      "esp:17",
+      "gray",
+      []
+    ],
+    [
+      "lr2B:2.l",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "lr1Light:A",
+      "r3:1",
+      "gold",
+      []
+    ],
+    [
+      "r3:2",
+      "esp:2",
+      "gold",
+      []
+    ],
+    [
+      "lr1Light:C",
+      "esp:GND.2",
+      "black",
+      []
+    ],
+    [
+      "lr2Light:A",
+      "r4:1",
+      "gold",
+      []
+    ],
+    [
+      "r4:2",
+      "esp:15",
+      "gold",
+      []
+    ],
+    [
+      "lr2Light:C",
+      "esp:GND.2",
+      "black",
+      []
+    ]
+  ],
+  "dependencies": {}
+}

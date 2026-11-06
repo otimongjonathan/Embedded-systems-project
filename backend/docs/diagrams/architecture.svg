@@ -1,120 +1,113 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
-  <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
-    </marker>
-    <style>
-      .t{font-size:24px;font-weight:700;fill:#0f172a}
-      .h{font-size:20px;font-weight:700;fill:#0f172a}
-      .b{font-size:18px;fill:#1e293b}
-      .s{font-size:16px;fill:#475569}
-      .dev{fill:#fff;stroke:#94a3b8;stroke-width:1.5}
-      .ln{stroke:#334155;stroke-width:2;fill:none}
-      .th{font-size:16px;font-weight:700;fill:#fff}
-      .td{font-size:16px;fill:#0f172a}
-    </style>
-  </defs>
-  <rect width="1800" height="1000" fill="#ffffff"/>
-  <text x="900" y="46" text-anchor="middle" style="font-size:28px;font-weight:700;fill:#0f172a">CoCIS Smart Control and Monitoring System: Architecture</text>
-
-  <!-- ================= LAYER 1: FIELD DEVICES ================= -->
-  <rect x="30" y="80" width="500" height="890" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
-  <text x="280" y="116" text-anchor="middle" class="t">1. Field Devices</text>
-
-  <rect x="50" y="136" width="460" height="230" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
-  <text x="70" y="168" class="h" fill="#1d4ed8">Main Entrance</text>
-  <rect class="dev" rx="8" x="70" y="186" width="200" height="70"/><text x="170" y="216" text-anchor="middle" class="b">RFID reader</text><text x="170" y="240" text-anchor="middle" class="s">entry lane</text>
-  <rect class="dev" rx="8" x="290" y="186" width="200" height="70"/><text x="390" y="216" text-anchor="middle" class="b">RFID reader</text><text x="390" y="240" text-anchor="middle" class="s">exit lane</text>
-  <rect class="dev" rx="8" x="70" y="272" width="200" height="70"/><text x="170" y="302" text-anchor="middle" class="b">Door servos</text><text x="170" y="326" text-anchor="middle" class="s">entry, exit</text>
-  <rect class="dev" rx="8" x="290" y="272" width="200" height="70"/><text x="390" y="302" text-anchor="middle" class="b">LCD, LEDs</text><text x="390" y="326" text-anchor="middle" class="s">and buzzer</text>
-
-  <rect x="50" y="386" width="460" height="140" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-  <text x="70" y="418" class="h" fill="#15803d">Lecture Room 1</text>
-  <rect class="dev" rx="8" x="70" y="436" width="200" height="70"/><text x="170" y="466" text-anchor="middle" class="b">IR beam pair</text><text x="170" y="490" text-anchor="middle" class="s">at the door</text>
-  <rect class="dev" rx="8" x="290" y="436" width="200" height="70"/><text x="390" y="478" text-anchor="middle" class="b">Lights</text>
-
-  <rect x="50" y="546" width="460" height="140" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-  <text x="70" y="578" class="h" fill="#15803d">Lecture Room 2</text>
-  <rect class="dev" rx="8" x="70" y="596" width="200" height="70"/><text x="170" y="626" text-anchor="middle" class="b">IR beam pair</text><text x="170" y="650" text-anchor="middle" class="s">at the door</text>
-  <rect class="dev" rx="8" x="290" y="596" width="200" height="70"/><text x="390" y="638" text-anchor="middle" class="b">Lights</text>
-
-  <rect x="50" y="706" width="460" height="244" rx="12" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-  <text x="70" y="738" class="h" fill="#b45309">Storage and Console</text>
-  <rect class="dev" rx="8" x="70" y="756" width="420" height="80"/><text x="280" y="790" text-anchor="middle" class="b">microSD card</text><text x="280" y="816" text-anchor="middle" class="s">CSV logs, config copy, upload queue</text>
-  <rect class="dev" rx="8" x="70" y="852" width="420" height="80"/><text x="280" y="886" text-anchor="middle" class="b">Serial monitor</text><text x="280" y="912" text-anchor="middle" class="s">management menu</text>
-
-  <!-- ================= LAYER 2: ESP32 ================= -->
-  <rect x="610" y="80" width="560" height="890" rx="16" fill="#f1f5f9" stroke="#334155" stroke-width="2.5"/>
-  <text x="890" y="116" text-anchor="middle" class="t">2. ESP32 Controller</text>
-  <text x="890" y="142" text-anchor="middle" class="s">one board, ESP-IDF and FreeRTOS</text>
-
-  <rect x="635" y="160" width="510" height="64" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
-  <text x="655" y="190" class="h">Access Control Task</text><text x="655" y="212" class="s">checks tags, opens doors</text>
-  <rect x="635" y="236" width="510" height="64" rx="10" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
-  <text x="655" y="266" class="h">Lighting Control Task</text><text x="655" y="288" class="s">counts people, switches lights</text>
-  <rect x="635" y="312" width="510" height="64" rx="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
-  <text x="655" y="342" class="h">Serial Menu Task</text><text x="655" y="364" class="s">status and settings for staff</text>
-  <rect x="635" y="388" width="510" height="64" rx="10" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
-  <text x="655" y="418" class="h">Network and Sync Task</text><text x="655" y="440" class="s">Wi-Fi, clock, uploads, config</text>
-
-  <rect x="635" y="468" width="510" height="76" rx="10" fill="#ffffff" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6 4"/>
-  <text x="890" y="498" text-anchor="middle" class="h">Shared resources</text>
-  <text x="890" y="526" text-anchor="middle" class="s">state_mutex, sd_mutex, event_queue</text>
-
-  <!-- decision rules table -->
-  <text x="890" y="584" text-anchor="middle" class="h">Access decision rules</text>
-  <g transform="translate(635,600)">
-    <rect width="510" height="40" fill="#1f3864"/>
-    <text x="22" y="26" class="th">#</text><text x="60" y="26" class="th">Condition</text><text x="420" y="26" class="th">Result</text>
-    <rect y="40" width="510" height="40" fill="#fff"/><text x="22" y="66" class="td">1</text><text x="60" y="66" class="td">Emergency mode on</text><text x="420" y="66" class="td" font-weight="700">Open</text>
-    <rect y="80" width="510" height="40" fill="#eef2f8"/><text x="22" y="106" class="td">2</text><text x="60" y="106" class="td">Unknown tag</text><text x="420" y="106" class="td">Deny</text>
-    <rect y="120" width="510" height="40" fill="#fff"/><text x="22" y="146" class="td">3</text><text x="60" y="146" class="td">Deactivated user</text><text x="420" y="146" class="td">Deny</text>
-    <rect y="160" width="510" height="40" fill="#eef2f8"/><text x="22" y="186" class="td">4</text><text x="60" y="186" class="td">Outside schedule (entry or exit)</text><text x="420" y="186" class="td">Deny</text>
-    <rect y="200" width="510" height="40" fill="#fff"/><text x="22" y="226" class="td">5</text><text x="60" y="226" class="td">Already inside, or not inside</text><text x="420" y="226" class="td">Deny</text>
-    <rect y="240" width="510" height="40" fill="#eef2f8"/><text x="22" y="266" class="td">6</text><text x="60" y="266" class="td">Otherwise</text><text x="420" y="266" class="td" font-weight="700">Open</text>
-    <rect width="510" height="280" fill="none" stroke="#94a3b8"/>
-    <line x1="44" y1="0" x2="44" y2="280" stroke="#94a3b8"/><line x1="404" y1="0" x2="404" y2="280" stroke="#94a3b8"/>
-  </g>
-
-  <!-- ================= LAYER 3: SERVER ================= -->
-  <rect x="1250" y="80" width="520" height="890" rx="16" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
-  <text x="1510" y="116" text-anchor="middle" class="t">3. Server</text>
-
-  <rect x="1275" y="150" width="470" height="110" rx="10" fill="#ffffff" stroke="#a78bfa" stroke-width="1.5"/>
-  <text x="1510" y="190" text-anchor="middle" class="h">Management clients</text>
-  <text x="1510" y="218" text-anchor="middle" class="s">Swagger UI, Postman, dashboard</text>
-  <text x="1510" y="242" text-anchor="middle" class="s">roles: admin, security, viewer</text>
-
-  <rect x="1275" y="330" width="470" height="250" rx="10" fill="#ffffff" stroke="#7c3aed" stroke-width="2"/>
-  <text x="1510" y="368" text-anchor="middle" class="h">REST API (FastAPI)</text>
-  <rect x="1295" y="390" width="205" height="110" rx="8" fill="#ede9fe"/>
-  <text x="1397" y="436" text-anchor="middle" class="b" font-weight="700">Device</text>
-  <text x="1397" y="462" text-anchor="middle" class="s">device key</text>
-  <rect x="1520" y="390" width="205" height="110" rx="8" fill="#ede9fe"/>
-  <text x="1622" y="436" text-anchor="middle" class="b" font-weight="700">Management</text>
-  <text x="1622" y="462" text-anchor="middle" class="s">login token</text>
-  <text x="1510" y="546" text-anchor="middle" class="s">rules, validation, audit log</text>
-
-  <g transform="translate(1290,660)">
-    <path d="M0,30 L0,220 A220,30 0 0 0 440,220 L440,30" fill="#fdf4ff" stroke="#a21caf" stroke-width="2"/>
-    <ellipse cx="220" cy="30" rx="220" ry="30" fill="#fae8ff" stroke="#a21caf" stroke-width="2"/>
-    <text x="220" y="38" text-anchor="middle" class="h">SQLite database</text>
-    <text x="220" y="110" text-anchor="middle" class="b">11 tables</text>
-    <text x="220" y="140" text-anchor="middle" class="s">users, visits, access events,</text>
-    <text x="220" y="164" text-anchor="middle" class="s">rooms, schedule, settings</text>
-  </g>
-
-  <!-- ================= CONNECTIONS ================= -->
-  <path class="ln" d="M510,300 H555 V192 H629" marker-end="url(#a)" marker-start="url(#a)"/>
-  <path class="ln" d="M510,471 H570 V268 H629" marker-end="url(#a)" marker-start="url(#a)"/>
-  <path class="ln" d="M510,631 H570 V471"/>
-  <path class="ln" d="M510,892 H585 V344 H629" marker-end="url(#a)" marker-start="url(#a)"/>
-  <path class="ln" d="M510,796 H600 V506 H629" marker-end="url(#a)" marker-start="url(#a)"/>
-
-  <path class="ln" d="M1145,420 H1269" stroke="#7c3aed" stroke-width="3" marker-end="url(#a)" marker-start="url(#a)"/>
-  <text x="1207" y="406" text-anchor="middle" style="font-size:16px;font-weight:700;fill:#6d28d9">Wi-Fi</text>
-  <text x="1207" y="448" text-anchor="middle" style="font-size:15px;fill:#6d28d9">HTTP, JSON</text>
-
-  <path class="ln" d="M1510,260 V324" stroke="#7c3aed" stroke-width="2.5" marker-end="url(#a)" marker-start="url(#a)"/>
-  <path class="ln" d="M1510,580 V654" stroke="#a21caf" stroke-width="2.5" marker-end="url(#a)" marker-start="url(#a)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1080" viewBox="0 0 2000 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs>
+<style>.t{font-size:25px;font-weight:700;fill:#0f172a}.h{font-size:19px;font-weight:700;fill:#0f172a}.b{font-size:16px;fill:#1e293b}.s{font-size:14px;fill:#475569}.l{font-size:15px;font-weight:700}.td{font-size:15px;fill:#0f172a}.th{font-size:15px;font-weight:700;fill:#000}</style>
+<rect width="2000" height="1080" fill="#fff"/>
+<text x="1000.0" y="46" text-anchor="middle" style="font-size:30px;font-weight:700;fill:#0f172a">CoCIS Smart Control and Monitoring System: Architecture</text>
+<rect x="30" y="80" width="420" height="970" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+<text x="240.0" y="116" text-anchor="middle" class="t">1. Field devices</text>
+<text x="240.0" y="140" text-anchor="middle" class="s">Wokwi parts</text>
+<rect x="50" y="160" width="380" height="149" rx="9" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8"/>
+<text x="64" y="187" class="h">Main entrance</text>
+<text x="64" y="210" class="b">MFRC522 RFID reader: entry lane</text>
+<text x="64" y="231" class="b">MFRC522 RFID reader: exit lane</text>
+<text x="64" y="252" class="b">Servo: entry door, servo: exit door</text>
+<text x="64" y="273" class="b">Green and red LED, buzzer</text>
+<text x="64" y="294" class="b">LCD 16x2 (I2C)</text>
+<rect x="50" y="331" width="380" height="65" rx="9" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
+<text x="64" y="358" class="h">Lecture Room 1</text>
+<text x="64" y="381" class="b">PIR motion sensor, room light</text>
+<rect x="50" y="418" width="380" height="65" rx="9" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
+<text x="64" y="445" class="h">Lecture Room 2</text>
+<text x="64" y="468" class="b">PIR motion sensor, room light</text>
+<rect x="50" y="505" width="380" height="107" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="1.8"/>
+<text x="64" y="532" class="h">Storage</text>
+<text x="64" y="555" class="b">microSD card: access.csv log</text>
+<text x="64" y="576" class="b">NVS flash: cards, people inside,</text>
+<text x="64" y="597" class="b">schedule (survive a reboot)</text>
+<rect x="50" y="634" width="380" height="65" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="1.8"/>
+<text x="64" y="661" class="h">Serial monitor</text>
+<text x="64" y="684" class="b">Console menu, admin PIN login</text>
+<rect x="510" y="80" width="540" height="970" rx="16" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+<text x="780.0" y="116" text-anchor="middle" class="t">2. ESP32 controller</text>
+<text x="780.0" y="140" text-anchor="middle" class="s">one board, ESP-IDF and FreeRTOS</text>
+<rect x="530" y="160" width="500" height="62" rx="9" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="548" y="187" class="h">rfid task (priority 6)</text><text x="548" y="209" class="s">reads both readers, decides, logs, publishes</text>
+<rect x="530" y="234" width="500" height="62" rx="9" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="548" y="261" class="h">door task (priority 4)</text><text x="548" y="283" class="s">opens a servo for 3 s (door queue)</text>
+<rect x="530" y="308" width="500" height="62" rx="9" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="548" y="335" class="h">room_lights task (priority 4)</text><text x="548" y="357" class="s">PIR every 100 ms, lights, 5 s hold</text>
+<rect x="530" y="382" width="500" height="62" rx="9" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="548" y="409" class="h">console task (priority 3)</text><text x="548" y="431" class="s">commands, admin PIN, schedule, cards</text>
+<rect x="530" y="456" width="500" height="62" rx="9" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="548" y="483" class="h">MQTT client (esp-mqtt)</text><text x="548" y="505" class="s">Wi-Fi, publishes JSON, receives commands</text>
+<rect x="530" y="530" width="500" height="62" rx="9" fill="#fff" stroke="#64748b" stroke-dasharray="6 4"/>
+<text x="780" y="557" text-anchor="middle" class="h">Shared state</text><text x="780" y="579" text-anchor="middle" class="s">state mutex, storage mutex, door queue</text>
+<text x="780" y="622" text-anchor="middle" class="h">Access decision rules (state.c)</text>
+<rect x="530" y="636" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="660" class="th">#</text><text x="590" y="660" class="th">Condition</text><text x="930" y="660" class="th">Result</text>
+<rect x="530" y="672" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="696" class="td">1</text><text x="590" y="696" class="td">Lockdown active</text><text x="930" y="696" class="td">Deny</text>
+<rect x="530" y="708" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="732" class="td">2</text><text x="590" y="732" class="td">Card not authorised</text><text x="930" y="732" class="td">Deny</text>
+<rect x="530" y="744" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="768" class="td">3</text><text x="590" y="768" class="td">Entry outside schedule</text><text x="930" y="768" class="td">Deny</text>
+<rect x="530" y="780" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="804" class="td">4</text><text x="590" y="804" class="td">Entry, already inside</text><text x="930" y="804" class="td">Deny</text>
+<rect x="530" y="816" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="840" class="td">5</text><text x="590" y="840" class="td">Exit, not inside</text><text x="930" y="840" class="td">Deny</text>
+<rect x="530" y="852" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="876" class="td">6</text><text x="590" y="876" class="td">Otherwise (exit after hours too)</text><text x="930" y="876" class="td">Open</text>
+<line x1="576" y1="636" x2="576" y2="888" stroke="#000"/><line x1="916" y1="636" x2="916" y2="888" stroke="#000"/>
+<rect x="1110" y="80" width="320" height="970" rx="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+<text x="1270.0" y="116" text-anchor="middle" class="t">3. Internet</text>
+<text x="1270.0" y="140" text-anchor="middle" class="s">public MQTT broker</text>
+<rect x="1130" y="230" width="280" height="191" rx="9" fill="#fff" stroke="#64748b" stroke-width="1.8"/>
+<text x="1144" y="257" class="h">broker.hivemq.com</text>
+<text x="1144" y="280" class="b">port 1883</text>
+<text x="1144" y="301" class="b"></text>
+<text x="1144" y="322" class="b">cocis/event/access</text>
+<text x="1144" y="343" class="b">cocis/state/occupancy</text>
+<text x="1144" y="364" class="b">cocis/state/room1, room2</text>
+<text x="1144" y="385" class="b">cocis/config/schedule</text>
+<text x="1144" y="406" class="b">cocis/cmd/entrance</text>
+<rect x="1490" y="80" width="480" height="970" rx="16" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+<text x="1730.0" y="116" text-anchor="middle" class="t">4. Server (laptop)</text>
+<text x="1730.0" y="140" text-anchor="middle" class="s">start.bat and bridge.bat</text>
+<rect x="1510" y="160" width="440" height="107" rx="9" fill="#fff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="1524" y="187" class="h">MQTT bridge</text>
+<text x="1524" y="210" class="b">Python, paho-mqtt</text>
+<text x="1524" y="231" class="b">Message to API call, stable ids</text>
+<text x="1524" y="252" class="b">Lockdown to the ESP32</text>
+<rect x="1510" y="370" width="440" height="128" rx="9" fill="#fff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="1524" y="397" class="h">REST API (FastAPI)</text>
+<text x="1524" y="420" class="b">Device endpoints: X-Device-Key</text>
+<text x="1524" y="441" class="b">Staff endpoints: token and roles</text>
+<text x="1524" y="462" class="b">Pydantic models validate input</text>
+<text x="1524" y="483" class="b">Rules, transactions, audit log</text>
+<rect x="1510" y="590" width="320" height="107" rx="9" fill="#fdf4ff" stroke="#a21caf" stroke-width="1.8"/>
+<text x="1524" y="617" class="h">SQLite database</text>
+<text x="1524" y="640" class="b">11 tables, 2 views</text>
+<text x="1524" y="661" class="b">access_events, building_visits,</text>
+<text x="1524" y="682" class="b">room_status_logs, users, ...</text>
+<rect x="1510" y="800" width="440" height="86" rx="9" fill="#fff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="1524" y="827" class="h">Staff in a browser</text>
+<text x="1524" y="850" class="b">Dashboard (live, Database tab)</text>
+<text x="1524" y="871" class="b">Swagger UI (API documentation)</text>
+<path d="M430,234 L530,191" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,363 L530,330" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,450 L530,350" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,558 L530,560" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,666 L530,420" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M1030,487 L1130,400" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="1080" y="490" text-anchor="middle" class="l" fill="#7c3aed">MQTT</text>
+<text x="1080" y="508" text-anchor="middle" class="l" fill="#7c3aed">Wi-Fi</text>
+<path d="M1410,270 L1510,213" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="1460" y="225" text-anchor="middle" class="l" fill="#7c3aed">MQTT</text>
+<path d="M1650,267 L1650,370" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<text x="1685" y="315" text-anchor="middle" class="l" fill="#7c3aed">HTTP</text>
+<path d="M1650,498 L1650,590" stroke="#a21caf" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<text x="1680" y="550" text-anchor="middle" class="l" fill="#a21caf">SQL</text>
+<path d="M1890,800 L1890,498" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<text x="1925" y="650" text-anchor="middle" class="l" fill="#7c3aed">HTTP</text>
+<text x="1925" y="668" text-anchor="middle" class="l" fill="#7c3aed">token</text>
 </svg>
