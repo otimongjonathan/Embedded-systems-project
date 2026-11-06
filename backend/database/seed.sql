@@ -18,6 +18,7 @@ INSERT OR IGNORE INTO access_schedule (day_of_week, is_open, open_time, close_ti
 
 INSERT OR IGNORE INTO system_settings (key, value, description) VALUES
     ('emergency_mode',        'false', 'true = all doors unlocked (fire / evacuation)'),
+    ('lockdown_mode',         'false', 'true = all doors locked (security threat); sent to MQTT controllers'),
     ('light_off_delay_s',     '30',    'Seconds after a room count reaches 0 before its lights switch off'),
     ('timezone',              'EAT-3', 'POSIX TZ string used by the ESP32 (Africa/Kampala)'),
     ('config_version',        '1',     'Incremented on every config change; ESP32 re-downloads when it changes'),
@@ -28,4 +29,6 @@ INSERT OR IGNORE INTO users (rfid_uid, full_name, reg_number, email, role, depar
     ('A1B2C3D4', 'Lisa Nyonyozi',     '24/U/0001', 'lisa.nyonyozi@students.mak.ac.ug', 'STUDENT',  'Computer Science'),
     ('11223344', 'Dr. Mary Lecturer', 'STF-0042',  'mary@cis.mak.ac.ug',               'LECTURER', 'Computer Science'),
     ('DEADBEEF', 'Security Officer',  'STF-0100',  'security@cis.mak.ac.ug',           'SECURITY', 'Estates'),
-    ('CAFEBABE', 'Guest Visitor',     NULL,        NULL,                               'VISITOR',  NULL);
+    ('CAFEBABE', 'Guest Visitor',     NULL,        NULL,                               'VISITOR',  NULL),
+    -- default authorised tag of the MQTT entrance controller (11223344 above is the other)
+    ('01020304', 'Entrance Demo Student', '24/U/0002', NULL,                          'STUDENT',  'Computer Science');

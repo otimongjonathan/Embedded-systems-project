@@ -55,6 +55,19 @@ def upload_batch(body: EventBatch, device=Depends(require_device), conn=Depends(
     """Offline path: records queued on the SD card while Wi-Fi was down.
     The decision was already made by the ESP32, so we store it as-is.
     Duplicate event_uuids are skipped, so re-sending a batch is always safe."""
+    return store_decided_events(conn, body, "OFFLINE_SYNC")
+
+
+@router.post("/relay")
+def relay(body: EventBatch, device=Depends(require_device), conn=Depends(get_db)):
+    """MQTT path: events from a controller that decides on its own and publishes to an
+    MQTT broker (the entrance ESP32), forwarded live by bridge/mqtt_bridge.py.
+    Stored like a batch, with source MQTT; duplicates are skipped the same way."""
+    return store_decided_events(conn, body, "MQTT")
+
+
+def store_decided_events(conn, body: EventBatch, source: str) -> dict:
+    """Store events whose decision a controller has already made."""
     accepted, duplicates = [], []
     with write_tx(conn):
         for ev in sorted(body.access_events, key=lambda e: e.occurred_at):
@@ -65,7 +78,7 @@ def upload_batch(body: EventBatch, device=Depends(require_device), conn=Depends(
             logic.record_access(
                 conn, event_uuid=ev.event_uuid, rfid_uid=ev.rfid_uid, door=ev.door,
                 decision=ev.decision, reason=ev.reason, user=user,
-                occurred_at=ts(ev.occurred_at), source="OFFLINE_SYNC")
+                occurred_at=ts(ev.occurred_at), source=source)
             accepted.append(ev.event_uuid)
         for ev in sorted(body.room_events, key=lambda e: e.occurred_at):
             room = conn.execute("SELECT * FROM rooms WHERE code = ?", (ev.room_code,)).fetchone()
@@ -113,4 +126,5 @@ def heartbeat(body: Heartbeat, device=Depends(require_device), conn=Depends(get_
         "server_time": now_iso(),
         "config_version": int(get_setting(conn, "config_version")),
         "emergency_mode": get_setting(conn, "emergency_mode") == "true",
+        "lockdown_mode": get_setting(conn, "lockdown_mode") == "true",
     }

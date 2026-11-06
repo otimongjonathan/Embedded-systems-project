@@ -1,0 +1,26 @@
+CoCIS firmware 1.0.0, ESP-IDF v5.5.2-729-g87912cd291
+[cocis] SD card mounted at /sd
+[cocis] SD: config v0, 4 tags, 0 inside, 0 queued events
+[cocis] Connecting to Wokwi-GUEST ... ESP_OK
+[cocis] Wi-Fi connected, IP 10.10.0.2
+> time 2026-10-30T09:00:00
+[cocis] Clock set to 2026-10-30T09:00:00
+> walk LR1 in
+[LR1] person in, now 1 inside
+> walk LR1 in
+[LR1] person in, now 2 inside
+[09:00:12] ENTRY A1B2C3D4 Lisa Nyonyozi: GRANTED OK (offline)
+> status
+Time       2026-10-30T09:00:49
+Network    NO API (Wi-Fi up)
+API        http://host.wokwi.internal:8000/api/v1
+Config     version 0 (built-in defaults)
+Emergency  off
+Inside     1 people
+LR1        2 people, lights ON (AUTO)
+LR2        0 people, lights off (AUTO)
+Queue      3 events waiting
+SD card    mounted, 8016 KB free
+Heap       107996 bytes free
+Staff      not logged in
+>

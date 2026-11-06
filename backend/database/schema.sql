@@ -63,8 +63,11 @@ CREATE TABLE IF NOT EXISTS access_events (
     decision     TEXT    NOT NULL CHECK (decision IN ('GRANTED','DENIED')),
     reason       TEXT    NOT NULL
                  CHECK (reason IN ('OK','UNKNOWN_TAG','INACTIVE_USER','OUTSIDE_SCHEDULE',
-                                   'ALREADY_INSIDE','NOT_INSIDE','EMERGENCY_OPEN')),
-    source       TEXT    NOT NULL DEFAULT 'ONLINE' CHECK (source IN ('ONLINE','OFFLINE_SYNC')),
+                                   'ALREADY_INSIDE','NOT_INSIDE','EMERGENCY_OPEN',
+                                   'OK_AFTER_HOURS')),                 -- exit after hours: MQTT entrance controller
+    -- ONLINE: decided by this API; OFFLINE_SYNC: decided by the ESP32 while offline;
+    -- MQTT: decided by an MQTT controller and relayed by the bridge
+    source       TEXT    NOT NULL DEFAULT 'ONLINE' CHECK (source IN ('ONLINE','OFFLINE_SYNC','MQTT')),
     occurred_at  TEXT    NOT NULL,                     -- time on the ESP32 clock (NTP)
     received_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now','localtime'))
 );
@@ -94,6 +97,8 @@ CREATE INDEX IF NOT EXISTS idx_visits_date ON building_visits(visit_date);
 -- 5. ROOM_STATUS_LOGS: history of occupancy / light changes per room
 --    Occupancy comes from a pair of infrared break-beams at each room door:
 --    beam A then B = PERSON_IN, beam B then A = PERSON_OUT.
+--    A controller with PIR motion sensors reports MOTION / NO_MOTION instead
+--    (occupant_count is then 1 for occupied, 0 for vacant).
 -- ---------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS room_status_logs (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,7 +108,8 @@ CREATE TABLE IF NOT EXISTS room_status_logs (
     is_occupied  INTEGER NOT NULL CHECK (is_occupied IN (0,1)),
     light_on     INTEGER NOT NULL CHECK (light_on IN (0,1)),
     trigger      TEXT    NOT NULL
-                 CHECK (trigger IN ('PERSON_IN','PERSON_OUT','COUNT_RESET','MANUAL_OVERRIDE','SCHEDULE','EMERGENCY')),
+                 CHECK (trigger IN ('PERSON_IN','PERSON_OUT','COUNT_RESET','MANUAL_OVERRIDE','SCHEDULE','EMERGENCY',
+                                    'MOTION','NO_MOTION')),
     occurred_at  TEXT    NOT NULL,
     received_at  TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now','localtime'))
 );

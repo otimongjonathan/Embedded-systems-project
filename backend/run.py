@@ -23,6 +23,10 @@ except ImportError:
 
 def port_free(host: str, port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        # Like uvicorn, ignore connections left waiting after a restart (macOS, Linux).
+        # Not on Windows, where this option would let two servers share the port.
+        if sys.platform != "win32":
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             s.bind((host, port))
             return True

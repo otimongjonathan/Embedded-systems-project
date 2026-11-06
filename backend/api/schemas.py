@@ -10,9 +10,11 @@ RFID = r"^[0-9A-Fa-f]{8,20}$"
 Door = Literal["ENTRY", "EXIT"]
 Decision = Literal["GRANTED", "DENIED"]
 Reason = Literal["OK", "UNKNOWN_TAG", "INACTIVE_USER", "OUTSIDE_SCHEDULE",
-                 "ALREADY_INSIDE", "NOT_INSIDE", "EMERGENCY_OPEN"]
+                 "ALREADY_INSIDE", "NOT_INSIDE", "EMERGENCY_OPEN",
+                 "OK_AFTER_HOURS"]                      # exit after hours: MQTT entrance controller
 Role = Literal["STUDENT", "STAFF", "LECTURER", "SECURITY", "VISITOR"]
-Trigger = Literal["PERSON_IN", "PERSON_OUT", "COUNT_RESET", "MANUAL_OVERRIDE", "SCHEDULE", "EMERGENCY"]
+Trigger = Literal["PERSON_IN", "PERSON_OUT", "COUNT_RESET", "MANUAL_OVERRIDE", "SCHEDULE", "EMERGENCY",
+                  "MOTION", "NO_MOTION"]               # last two: PIR rooms of the MQTT controller
 
 
 class _Upper(BaseModel):

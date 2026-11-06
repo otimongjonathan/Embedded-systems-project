@@ -3,19 +3,26 @@
 Run (Windows):      start.bat
 Run (macOS/Linux):  ./start.sh
 Docs: http://localhost:8000/docs   (interactive Swagger UI)
+Dashboard: http://localhost:8000/dashboard/   (staff web page)
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from .db import init_db, now_iso
 from .routes_admin import router as admin_router
 from .routes_device import router as device_router
 
+DASHBOARD_DIR = Path(__file__).resolve().parent.parent / "dashboard"
+
 DESCRIPTION = """
 Database API for the ESP32 access-control, occupancy and lighting system
 (Embedded Systems coursework, Makerere University, 2026/2027).
+
+Staff dashboard (live occupancy, lights, schedule, users, reports): open [/dashboard](/dashboard/).
 
 ## How to test it here
 
@@ -59,6 +66,8 @@ app = FastAPI(
 )
 app.include_router(device_router)
 app.include_router(admin_router)
+# the staff dashboard: plain HTML, CSS and JS, served by this same API
+app.mount("/dashboard", StaticFiles(directory=DASHBOARD_DIR, html=True), name="dashboard")
 
 
 @app.get("/", include_in_schema=False)

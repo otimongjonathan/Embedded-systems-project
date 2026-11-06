@@ -192,3 +192,23 @@ def test_swagger_form_login_and_root_redirect(client):
     assert client.get("/", follow_redirects=False).headers["location"] == "/docs"
     schemes = client.get("/openapi.json").json()["components"]["securitySchemes"]
     assert set(schemes) == {"AdminLogin", "DeviceKey"}
+
+
+def test_dashboard_is_served(client):
+    r = client.get("/dashboard/")
+    assert r.status_code == 200 and "text/html" in r.headers["content-type"]
+    assert "app.js" in r.text
+    js = client.get("/dashboard/app.js")
+    assert js.status_code == 200 and "/api/v1" in js.text
+    assert client.get("/dashboard/style.css").status_code == 200
+
+
+def test_database_viewer_is_read_only_and_hides_secrets(client):
+    tables = {t["name"] for t in client.get("/api/v1/db/tables").json()}
+    assert {"access_events", "building_visits", "room_status_logs", "v_people_inside"} <= tables
+    events = client.get("/api/v1/db/access_events?limit=5").json()
+    assert "event_uuid" in events["columns"] and len(events["rows"]) <= 5
+    admins = client.get("/api/v1/db/admins").json()
+    assert "password_hash" not in admins["columns"]
+    assert client.get("/api/v1/db/admin_sessions").status_code == 404     # not on the list
+    assert client.get("/api/v1/db/users;DROP TABLE users").status_code == 404

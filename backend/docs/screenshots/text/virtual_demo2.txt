@@ -1,0 +1,35 @@
+--- 8. Staff log in through the serial menu and use emergency mode ---
+> login admin Admin@CoCIS2026
+Logged in as admin (SUPER_ADMIN)
+> emergency on Fire drill
+Done. Downloading the new config...
+[sync] config version 2 downloaded and saved to the SD card
+> tap CAFEBABE entry
+[09:00:09] ENTRY CAFEBABE Guest Visitor: GRANTED EMERGENCY_OPEN (API), door opens for 3 s
+> emergency off Drill over
+Done. Downloading the new config...
+[sync] config version 3 downloaded and saved to the SD card
+
+--- 9. Everyone leaves: lights go off after the delay ---
+> walk LR1 out
+[LR1] person out, now 0 inside, lights ON
+> walk LR2 out
+[LR2] person out, now 0 inside, lights ON
+> tap A1B2C3D4 exit
+[09:00:10] EXIT A1B2C3D4 Lisa Nyonyozi: GRANTED OK (API), door opens for 3 s
+> tap 11223344 exit
+[09:00:11] EXIT 11223344 Dr. Mary Lecturer: GRANTED OK (API), door opens for 3 s
+> tap CAFEBABE exit
+[09:00:11] EXIT CAFEBABE Guest Visitor: GRANTED OK (API), door opens for 3 s
+> rooms
+  LR1  0 people  lights ON
+  LR2  0 people  lights ON
+
+The rooms are empty. Unlike a motion sensor, the count (not movement) decides,
+and the lights switch off 30 s after the count reaches 0. Waiting...
+
+--- 10. Lights are now off in both rooms ---
+> rooms
+  LR1  0 people  lights off
+  LR2  0 people  lights off
+
