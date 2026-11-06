@@ -3,6 +3,8 @@
 #include "state.h"
 #include "storage.h"
 #include "comms.h"
+#include "rfid.h"
+#include "door.h"
 #include "driver/uart.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -29,8 +31,9 @@ static void cmd_help(void) {
         "  help | status | occupancy | who | logs <n>\n"
         "  login <user> <pin> | logout\n"
         "  schedule show | schedule set <HH:MM> <HH:MM>  [admin]\n"
-        "  lights <room1|room2> <on|off>                  [admin]\n"
-        "  sd dump <n> | config save | reboot\n");
+        "  simulate in | simulate out                    [TEST SYSTEM]\n"
+        "  servo in | servo out                         [TEST SERVO]\n"
+        "  reboot\n");
 }
 
 static void cmd_status(void) {
@@ -87,15 +90,43 @@ static void handle_command(char *line) {
         }
     }
     else if (!strcmp(tok, "login")) {
-        char *p = strtok_r(NULL, " \t", &save);
-        p = strtok_r(NULL, " \t", &save);
+        char *p = strtok_r(NULL, " \t", &save); 
+        p = strtok_r(NULL, " \t", &save);       
         if (!p) p = tok; 
         char *pin = strtok_r(NULL, " \t", &save);
         if (!pin) pin = p;
+
         if (state_admin_login(pin)) con_printf("OK: admin\n");
         else con_printf("ERR: bad pin\n");
     }
     else if (!strcmp(tok, "logout")) { state_admin_logout(); con_printf("OK\n"); }
+    
+    // --- SIMULATE COMMAND ---
+    else if (!strcmp(tok, "simulate")) {
+        char *dir = strtok_r(NULL, " \t", &save);
+        if (!dir) {
+            con_printf("usage: simulate in|out\n");
+            return;
+        }
+        if (!strcmp(dir, "in")) {
+            rfid_simulate_scan(true);
+        } else if (!strcmp(dir, "out")) {
+            rfid_simulate_scan(false);
+        } else {
+            con_printf("usage: simulate in|out\n");
+        }
+    }
+    // -----------------------------
+
+    else if (!strcmp(tok, "servo")) {
+        char *dir = strtok_r(NULL, " \t", &save);
+        if (!dir || (strcmp(dir, "in") != 0 && strcmp(dir, "out") != 0)) {
+            con_printf("usage: servo in|out\n");
+            return;
+        }
+        door_test(strcmp(dir, "in") == 0);
+    }
+
     else if (!strcmp(tok, "reboot")) {
         con_printf("Rebooting...\n");
         vTaskDelay(pdMS_TO_TICKS(200));
@@ -142,5 +173,5 @@ void console_init(void) {
 }
 
 void console_start(void) {
-    xTaskCreate(console_task, "console", 4096, NULL, 3, NULL);
+    xTaskCreate(console_task, "console", 8192, NULL, 3, NULL);
 }

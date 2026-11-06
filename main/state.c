@@ -48,12 +48,8 @@ static int find_inside(uint32_t tag) {
 void state_init(void) {
     memset(&s, 0, sizeof(s));
     s.mtx = xSemaphoreCreateMutex();
-    s.sched_start = 7 * 60;
-    s.sched_end   = 21 * 60;
-
-    int st = -1, en = -1;
-    storage_load_schedule(&st, &en);
-    if (st >= 0 && en >= 0) { s.sched_start = st; s.sched_end = en; }
+    s.sched_start = ACCESS_START_MIN;
+    s.sched_end   = ACCESS_END_MIN;
 
     uint32_t tags[INSIDE_MAX]; int n = 0;
     storage_load_inside(tags, &n);
@@ -167,6 +163,14 @@ void state_admin_logout(void) {
     xSemaphoreTake(s.mtx, portMAX_DELAY);
     s.admin = false;
     xSemaphoreGive(s.mtx);
+}
+
+void state_set_lockdown(bool active) {
+    g_lockdown_active = active;
+}
+
+bool state_lockdown_active(void) {
+    return g_lockdown_active;
 }
 
 void state_room_get(int room, room_state_t *out) {

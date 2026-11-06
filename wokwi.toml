@@ -2,3 +2,7 @@
 version = 1
 elf = "build/entrance.elf"
 firmware = "build/entrance.bin"
+
+[[sdcard]]
+folder = "sdcard"
+writeback = true

@@ -3,3 +3,4 @@
 
 void door_init(void);
 void door_open(bool is_entry_door);
+void door_test(bool is_entry_door);

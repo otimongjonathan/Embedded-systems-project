@@ -11,10 +11,12 @@
 #include "freertos/semphr.h"
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 static const char *TAG = "storage";
 static FILE *s_fp = NULL;
 static SemaphoreHandle_t s_mtx = NULL;
+static bool s_sd_ready = false;
 
 void storage_init(void) {
     esp_err_t err = nvs_flash_init();
@@ -31,14 +33,14 @@ void storage_init(void) {
     slot.gpio_cs = PIN_SD_CS;
 
     esp_vfs_fat_sdmmc_mount_config_t cfg = {
-        .format_if_mount_failed = true,
+        .format_if_mount_failed = false,
         .max_files = 4,
         .allocation_unit_size = 16 * 1024,
     };
     sdmmc_card_t *card = NULL;
     err = esp_vfs_fat_sdspi_mount("/sdcard", &host, &slot, &cfg, &card);
     if (err != ESP_OK) {
-        ESP_LOGW(TAG, "SD mount failed (%s); RAM-only logging", esp_err_to_name(err));
+        ESP_LOGE(TAG, "SD mount failed (%s); access logs will not be persistent", esp_err_to_name(err));
         return;
     }
     s_fp = fopen("/sdcard/access.csv", "a");
@@ -48,16 +50,62 @@ void storage_init(void) {
             fprintf(s_fp, "epoch,iso8601,tag_hex,dir,result\n");
             fflush(s_fp);
         }
+        s_sd_ready = true;
+        ESP_LOGI(TAG, "Access logging enabled: /sdcard/access.csv");
+    } else {
+        ESP_LOGE(TAG, "Could not open /sdcard/access.csv; access logs will not be persistent");
     }
+}
+
+bool storage_log_ready(void) {
+    return s_sd_ready;
+}
+
+int storage_load_events(storage_event_t *events, int max_events) {
+    if (!events || max_events <= 0 || !s_sd_ready) return 0;
+    xSemaphoreTake(s_mtx, portMAX_DELAY);
+    FILE *fp = fopen("/sdcard/access.csv", "r");
+    if (!fp) { xSemaphoreGive(s_mtx); return 0; }
+    storage_event_t ring[64];
+    int capacity = max_events < 64 ? max_events : 64;
+    int count = 0;
+    char line[192];
+    (void)fgets(line, sizeof(line), fp); /* CSV header */
+    while (fgets(line, sizeof(line), fp)) {
+        long epoch; unsigned tag; char dir[8], result[32];
+        if (sscanf(line, "%ld,%*31[^,],%8X,%7[^,],%31[^\r\n]",
+                   &epoch, &tag, dir, result) != 4) continue;
+        int i;
+        if (count < capacity) i = count++;
+        else {
+            memmove(ring, ring + 1, (size_t)(capacity - 1) * sizeof(ring[0]));
+            i = capacity - 1;
+        }
+        ring[i].ts = (time_t)epoch; ring[i].tag = (uint32_t)tag;
+        ring[i].is_in = strcmp(dir, "IN") == 0;
+        snprintf(ring[i].result, sizeof(ring[i].result), "%s", result);
+    }
+    fclose(fp);
+    xSemaphoreGive(s_mtx);
+    for (int i = 0; i < count; ++i) events[i] = ring[count - 1 - i];
+    return count;
 }
 
 void storage_load_schedule(int *start, int *end) {
     *start = -1; *end = -1;
     nvs_handle_t h;
     if (nvs_open("cocis", NVS_READONLY, &h) != ESP_OK) return;
-    int32_t s = 7*60, e = 21*60;
-    nvs_get_i32(h, "sched_start", &s);
-    nvs_get_i32(h, "sched_end",   &e);
+    int32_t s = 6*60 + 30, e = 23*60;
+    esp_err_t start_err = nvs_get_i32(h, "sched_start", &s);
+    esp_err_t end_err   = nvs_get_i32(h, "sched_end",   &e);
+    if (start_err == ESP_ERR_NVS_NOT_FOUND || end_err == ESP_ERR_NVS_NOT_FOUND ||
+        (s == 7*60 && e == 21*60)) {
+        s = 6*60 + 30;
+        e = 23*60;
+        nvs_set_i32(h, "sched_start", s);
+        nvs_set_i32(h, "sched_end", e);
+        nvs_commit(h);
+    }
     *start = s; *end = e;
     nvs_close(h);
 }
@@ -99,13 +147,17 @@ void storage_save_inside(const uint32_t *tags, int n) {
 }
 
 void storage_log_event(time_t ts, uint32_t tag, bool is_in, const char *result) {
-    if (!s_fp) return;
+    if (!s_fp || !s_mtx) {
+        ESP_LOGE(TAG, "Access log skipped: SD card log is unavailable");
+        return;
+    }
     char iso[32]; struct tm tm; localtime_r(&ts, &tm);
     strftime(iso, sizeof(iso), "%Y-%m-%dT%H:%M:%S", &tm);
     xSemaphoreTake(s_mtx, portMAX_DELAY);
-    fprintf(s_fp, "%ld,%s,%08lX,%s,%s\n",
-            (long)ts, iso, (unsigned long)tag,
-            is_in ? "IN" : "OUT", result);
-    fflush(s_fp);
+    int written = fprintf(s_fp, "%ld,%s,%08lX,%s,%s\n",
+                          (long)ts, iso, (unsigned long)tag,
+                          is_in ? "IN" : "OUT", result ? result : "?");
+    if (written < 0 || fflush(s_fp) != 0 || fsync(fileno(s_fp)) != 0)
+        ESP_LOGE(TAG, "Failed to commit access event to /sdcard/access.csv");
     xSemaphoreGive(s_mtx);
 }
