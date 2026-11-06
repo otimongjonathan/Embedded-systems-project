@@ -35,9 +35,10 @@
 #define TOPIC_ROOM1      "cocis/state/room1"
 #define TOPIC_ROOM2      "cocis/state/room2"
 
-/* Authorized tags (11:22:33:44) */
-static const uint32_t AUTHORIZED_TAGS[] = { 0x11223344, 0x01020304 };
-#define N_AUTH (sizeof(AUTHORIZED_TAGS)/sizeof(AUTHORIZED_TAGS[0]))
+/* Authorized tags */
+#define AUTH_USERS_MAX   64
+static const uint32_t DEFAULT_AUTHORIZED_TAGS[] = { 0x11223344, 0x01020304 };
+#define N_DEFAULT_AUTH   (sizeof(DEFAULT_AUTHORIZED_TAGS)/sizeof(DEFAULT_AUTHORIZED_TAGS[0]))
 
 /* Limits */
 #define INSIDE_MAX       16

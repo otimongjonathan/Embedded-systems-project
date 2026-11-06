@@ -49,12 +49,14 @@ static void rc522_w(rc522_t *d, uint8_t r, uint8_t v) {
     spi_transaction_t t = { .length = 16, .tx_buffer = tx };
     spi_device_transmit(d->spi, &t);
 }
+
 static uint8_t rc522_r(rc522_t *d, uint8_t r) {
     uint8_t tx[2] = { (uint8_t)(((r << 1) & 0x7E) | 0x80), 0 }, rx[2] = {0};
     spi_transaction_t t = { .length = 16, .tx_buffer = tx, .rx_buffer = rx };
     spi_device_transmit(d->spi, &t);
     return rx[1];
 }
+
 static esp_err_t rc522_read_fifo(rc522_t *d, uint8_t *buf, int count) {
     uint8_t tx[19] = {0}, rx[19] = {0};
     if (count < 1 || count > 18) return ESP_ERR_INVALID_SIZE;
@@ -68,6 +70,7 @@ static esp_err_t rc522_read_fifo(rc522_t *d, uint8_t *buf, int count) {
     if (err == ESP_OK) memcpy(buf, &rx[1], (size_t)count);
     return err;
 }
+
 static void rc522_init(rc522_t *d, spi_device_handle_t spi, gpio_num_t rst) {
     d->spi = spi; d->rst = rst; d->last_tag = 0; d->last_scan = 0;
     gpio_set_direction(rst, GPIO_MODE_OUTPUT);
@@ -84,6 +87,7 @@ static void rc522_init(rc522_t *d, spi_device_handle_t spi, gpio_num_t rst) {
     if (!(v & 0x03)) v |= 0x03;
     rc522_w(d, REG_TX_CONTROL, v);
 }
+
 static int transceive(rc522_t *d, uint8_t *tx, int txlen, uint8_t fr,
                       uint8_t *rx, int *rxlen, int wait_ms) {
     rc522_w(d, REG_COMMAND,    CMD_IDLE);
@@ -111,6 +115,7 @@ static int transceive(rc522_t *d, uint8_t *tx, int txlen, uint8_t fr,
     }
     return 0;
 }
+
 static int read_uid(rc522_t *d, uint8_t uid[4]) {
     uint8_t req = PICC_REQIDL, atqa[2]; int an = sizeof(atqa);
     if (transceive(d, &req, 1, 0x07, atqa, &an, 40) != 0 || an != 2) return -1;
@@ -121,6 +126,7 @@ static int read_uid(rc522_t *d, uint8_t uid[4]) {
     memcpy(uid, buf, 4);
     return 0;
 }
+
 static uint32_t uid_to_u32(const uint8_t u[4]) {
     return ((uint32_t)u[0] << 24) | ((uint32_t)u[1] << 16) |
            ((uint32_t)u[2] << 8)  |  (uint32_t)u[3];
@@ -134,6 +140,42 @@ static void feedback(bool ok, bool after_hours) {
     gpio_set_level(PIN_BUZZER, 0);
     gpio_set_level(PIN_LED_GREEN, 0);
     gpio_set_level(PIN_LED_RED, 0);
+}
+
+void rfid_trigger_scan(uint32_t tag, bool is_entry) {
+    time_t t_now = time(NULL);
+    result_t r = state_evaluate(tag, is_entry, t_now);
+    bool ok = (r == RES_OK || r == RES_OK_AFTER_HOURS);
+    if (ok) door_open(is_entry);
+    feedback(ok, r == RES_OK_AFTER_HOURS);
+
+    lcd_show_access(tag, is_entry, state_result_str(r));
+
+    storage_log_event(t_now, tag, is_entry, state_result_str(r));
+    comms_publish_event(tag, is_entry, state_result_str(r));
+    comms_publish_occupancy(state_occupancy());
+    state_persist();
+
+    // --- PROFESSIONAL CONSOLE LOGGING ---
+    const char* msg = "Unknown";
+    switch (r) {
+        case RES_OK:                 msg = "Access Granted"; break;
+        case RES_OK_AFTER_HOURS:     msg = "Access Granted (After Hours)"; break;
+        case RES_DENIED_UNKNOWN:     msg = "Access Denied (Unknown Tag)"; break;
+        case RES_DENIED_SCHEDULE:    msg = "Access Denied (Outside Schedule)"; break;
+        case RES_DENIED_ALREADY_IN:  msg = "Access Denied (Already Inside)"; break;
+        case RES_DENIED_NOT_IN:      msg = "Access Denied (Not Inside)"; break;
+    }
+    
+    printf("\nRFID Card: %08lX | %s | %s\n> ",
+           (unsigned long)tag,
+           is_entry ? "ENTRY" : "EXIT",
+           msg);
+    fflush(stdout);
+
+    // Reset LCD to idle after 3 seconds
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    lcd_update_idle(state_occupancy());
 }
 
 static void handle_scan(rc522_t *d, bool is_entry) {
@@ -159,39 +201,7 @@ static void handle_scan(rc522_t *d, bool is_entry) {
     if (tag == d->last_tag && (now - d->last_scan) < pdMS_TO_TICKS(SCAN_COOLDOWN_MS)) return;
     d->last_tag = tag; d->last_scan = now;
 
-    time_t t_now = time(NULL);
-    result_t r = state_evaluate(tag, is_entry, t_now);
-    bool ok = (r == RES_OK || r == RES_OK_AFTER_HOURS);
-    if (ok) door_open(is_entry);
-    feedback(ok, r == RES_OK_AFTER_HOURS);
-
-    lcd_show_access(tag, is_entry, state_result_str(r));
-
-    storage_log_event(t_now, tag, is_entry, state_result_str(r));
-    comms_publish_event(tag, is_entry, state_result_str(r));
-    comms_publish_occupancy(state_occupancy());
-    state_persist();
-
-    // --- PROFESSIONAL CONSOLE LOGGING ---
-    const char* msg = "Unknown";
-    switch (r) {
-        case RES_OK:                 msg = "Access Granted"; break;
-        case RES_OK_AFTER_HOURS:     msg = "Access Granted (After Hours)"; break;
-        case RES_DENIED_UNKNOWN:     msg = "Access Denied (Unknown Tag)"; break;
-        case RES_DENIED_SCHEDULE:    msg = "Access Denied (Outside Schedule)"; break;
-        case RES_DENIED_ALREADY_IN:  msg = "Access Denied (Already Inside)"; break;
-        case RES_DENIED_NOT_IN:      msg = "Access Denied (Not Inside)"; break;
-    }
-    
-    printf("RFID Card: %08lX | %s | %s\n",
-           (unsigned long)tag,
-           is_entry ? "ENTRY" : "EXIT",
-           msg);
-    fflush(stdout);
-
-    // Wait 3 seconds so the user can read the LCD, then reset to idle
-    vTaskDelay(pdMS_TO_TICKS(3000));
-    lcd_update_idle(state_occupancy());
+    rfid_trigger_scan(tag, is_entry);
 }
 
 static void rfid_task(void *arg) {

@@ -98,6 +98,33 @@ void storage_save_inside(const uint32_t *tags, int n) {
     nvs_close(h);
 }
 
+void storage_load_users(uint32_t *tags, int *n) {
+    *n = 0;
+    nvs_handle_t h;
+    if (nvs_open("cocis", NVS_READONLY, &h) != ESP_OK) return;
+    uint8_t buf[sizeof(int) + AUTH_USERS_MAX * sizeof(uint32_t)];
+    size_t len = sizeof(buf);
+    if (nvs_get_blob(h, "users", buf, &len) == ESP_OK && len >= sizeof(int)) {
+        int cnt; memcpy(&cnt, buf, sizeof(int));
+        if (cnt < 0 || cnt > AUTH_USERS_MAX) cnt = 0;
+        memcpy(tags, buf + sizeof(int), cnt * sizeof(uint32_t));
+        *n = cnt;
+    }
+    nvs_close(h);
+}
+
+void storage_save_users(const uint32_t *tags, int n) {
+    if (n < 0 || n > AUTH_USERS_MAX) return;
+    nvs_handle_t h;
+    if (nvs_open("cocis", NVS_READWRITE, &h) != ESP_OK) return;
+    uint8_t buf[sizeof(int) + AUTH_USERS_MAX * sizeof(uint32_t)] = {0};
+    memcpy(buf, &n, sizeof(int));
+    memcpy(buf + sizeof(int), tags, n * sizeof(uint32_t));
+    nvs_set_blob(h, "users", buf, sizeof(buf));
+    nvs_commit(h);
+    nvs_close(h);
+}
+
 void storage_log_event(time_t ts, uint32_t tag, bool is_in, const char *result) {
     if (!s_fp) return;
     char iso[32]; struct tm tm; localtime_r(&ts, &tm);
