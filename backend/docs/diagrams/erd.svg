@@ -1,0 +1,278 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1210" viewBox="0 0 1800 1210" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<style>
+ .th{font-size:19px;font-weight:700;fill:#fff} .c{font-size:15px;fill:#0f172a} .ty{font-size:13px;fill:#64748b}
+ .k{font-size:12px;font-weight:700} .r{stroke:#334155;stroke-width:2;fill:none} .card{font-size:15px;font-weight:700;fill:#b91c1c}
+</style>
+<rect width="1800" height="1210" fill="#fff"/>
+<text x="900" y="44" text-anchor="middle" style="font-size:28px;font-weight:700;fill:#0f172a">Entity-Relationship Diagram: cocis.db (SQLite)</text>
+<path d="M440,168 H480" class="r"/><text x="446" y="162" class="card">1</text><text x="464" y="162" class="card">N</text><path d="M880,220 H900 V168 H920" class="r"/><text x="886" y="214" class="card">1</text><text x="906" y="162" class="card">1</text><path d="M880,246 H900" class="r"/><path d="M340,110 V80 H1220 V110" class="r"/><text x="346" y="98" class="card">1</text><text x="1226" y="98" class="card">N</text><path d="M1560,474 V560" class="r"/><text x="1568" y="492" class="card">1</text><text x="1568" y="552" class="card">N</text><path d="M440,618 H480" class="r"/><text x="446" y="612" class="card">1</text><text x="464" y="612" class="card">N</text><path d="M440,722 H460 V750 H900 V722 H920" class="r"/><text x="446" y="716" class="card">1</text><text x="904" y="716" class="card">N</text>
+<rect x="40" y="110" width="400" height="338" rx="10" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+<path d="M40,120 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#2563eb"/>
+<text x="240.0" y="139" text-anchor="middle" class="th">users</text>
+<text x="52" y="174" class="k" fill="#b91c1c">PK</text>
+<text x="88" y="174" class="c" font-weight="700">id</text>
+<text x="428" y="174" text-anchor="end" class="ty">INTEGER</text>
+<rect x="41" y="182" width="398" height="26" fill="#f8fafc"/>
+<text x="52" y="200" class="k" fill="#047857">UQ</text>
+<text x="88" y="200" class="c">rfid_uid</text>
+<text x="428" y="200" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="226" class="c">full_name</text>
+<text x="428" y="226" text-anchor="end" class="ty">TEXT</text>
+<rect x="41" y="234" width="398" height="26" fill="#f8fafc"/>
+<text x="52" y="252" class="k" fill="#047857">UQ</text>
+<text x="88" y="252" class="c">reg_number</text>
+<text x="428" y="252" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="278" class="c">email</text>
+<text x="428" y="278" text-anchor="end" class="ty">TEXT</text>
+<rect x="41" y="286" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="304" class="c">phone</text>
+<text x="428" y="304" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="330" class="c">role</text>
+<text x="428" y="330" text-anchor="end" class="ty">TEXT</text>
+<rect x="41" y="338" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="356" class="c">department</text>
+<text x="428" y="356" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="382" class="c">is_active</text>
+<text x="428" y="382" text-anchor="end" class="ty">INTEGER</text>
+<rect x="41" y="390" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="408" class="c">created_at</text>
+<text x="428" y="408" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="434" class="c">updated_at</text>
+<text x="428" y="434" text-anchor="end" class="ty">TEXT</text><rect x="480" y="110" width="400" height="234" rx="10" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+<path d="M480,120 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#2563eb"/>
+<text x="680.0" y="139" text-anchor="middle" class="th">building_visits</text>
+<text x="492" y="174" class="k" fill="#b91c1c">PK</text>
+<text x="528" y="174" class="c" font-weight="700">id</text>
+<text x="868" y="174" text-anchor="end" class="ty">INTEGER</text>
+<rect x="481" y="182" width="398" height="26" fill="#f8fafc"/>
+<text x="492" y="200" class="k" fill="#1d4ed8">FK</text>
+<text x="528" y="200" class="c">user_id</text>
+<text x="868" y="200" text-anchor="end" class="ty">INTEGER</text>
+<text x="492" y="226" class="k" fill="#1d4ed8">FK</text>
+<text x="528" y="226" class="c">entry_event_id</text>
+<text x="868" y="226" text-anchor="end" class="ty">INTEGER</text>
+<rect x="481" y="234" width="398" height="26" fill="#f8fafc"/>
+<text x="492" y="252" class="k" fill="#1d4ed8">FK</text>
+<text x="528" y="252" class="c">exit_event_id</text>
+<text x="868" y="252" text-anchor="end" class="ty">INTEGER</text>
+<text x="528" y="278" class="c">time_in</text>
+<text x="868" y="278" text-anchor="end" class="ty">TEXT</text>
+<rect x="481" y="286" width="398" height="26" fill="#f8fafc"/>
+<text x="528" y="304" class="c">time_out</text>
+<text x="868" y="304" text-anchor="end" class="ty">TEXT</text>
+<text x="528" y="330" class="c">visit_date</text>
+<text x="868" y="330" text-anchor="end" class="ty">TEXT (generated)</text><rect x="920" y="110" width="400" height="312" rx="10" fill="#fff" stroke="#2563eb" stroke-width="2"/>
+<path d="M920,120 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#2563eb"/>
+<text x="1120.0" y="139" text-anchor="middle" class="th">access_events</text>
+<text x="932" y="174" class="k" fill="#b91c1c">PK</text>
+<text x="968" y="174" class="c" font-weight="700">id</text>
+<text x="1308" y="174" text-anchor="end" class="ty">INTEGER</text>
+<rect x="921" y="182" width="398" height="26" fill="#f8fafc"/>
+<text x="932" y="200" class="k" fill="#047857">UQ</text>
+<text x="968" y="200" class="c">event_uuid</text>
+<text x="1308" y="200" text-anchor="end" class="ty">TEXT</text>
+<text x="968" y="226" class="c">rfid_uid</text>
+<text x="1308" y="226" text-anchor="end" class="ty">TEXT</text>
+<rect x="921" y="234" width="398" height="26" fill="#f8fafc"/>
+<text x="932" y="252" class="k" fill="#1d4ed8">FK</text>
+<text x="968" y="252" class="c">user_id</text>
+<text x="1308" y="252" text-anchor="end" class="ty">INTEGER</text>
+<text x="968" y="278" class="c">door</text>
+<text x="1308" y="278" text-anchor="end" class="ty">ENTRY | EXIT</text>
+<rect x="921" y="286" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="304" class="c">decision</text>
+<text x="1308" y="304" text-anchor="end" class="ty">GRANTED | DENIED</text>
+<text x="968" y="330" class="c">reason</text>
+<text x="1308" y="330" text-anchor="end" class="ty">TEXT</text>
+<rect x="921" y="338" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="356" class="c">source</text>
+<text x="1308" y="356" text-anchor="end" class="ty">ONLINE | OFFLINE_SYNC</text>
+<text x="968" y="382" class="c">occurred_at</text>
+<text x="1308" y="382" text-anchor="end" class="ty">TEXT</text>
+<rect x="921" y="390" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="408" class="c">received_at</text>
+<text x="1308" y="408" text-anchor="end" class="ty">TEXT</text><rect x="1360" y="110" width="400" height="364" rx="10" fill="#fff" stroke="#16a34a" stroke-width="2"/>
+<path d="M1360,120 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#16a34a"/>
+<text x="1560.0" y="139" text-anchor="middle" class="th">rooms</text>
+<text x="1372" y="174" class="k" fill="#b91c1c">PK</text>
+<text x="1408" y="174" class="c" font-weight="700">id</text>
+<text x="1748" y="174" text-anchor="end" class="ty">INTEGER</text>
+<rect x="1361" y="182" width="398" height="26" fill="#f8fafc"/>
+<text x="1372" y="200" class="k" fill="#047857">UQ</text>
+<text x="1408" y="200" class="c">code</text>
+<text x="1748" y="200" text-anchor="end" class="ty">TEXT</text>
+<text x="1408" y="226" class="c">name</text>
+<text x="1748" y="226" text-anchor="end" class="ty">TEXT</text>
+<rect x="1361" y="234" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="252" class="c">room_type</text>
+<text x="1748" y="252" text-anchor="end" class="ty">TEXT</text>
+<text x="1408" y="278" class="c">capacity</text>
+<text x="1748" y="278" text-anchor="end" class="ty">INTEGER</text>
+<rect x="1361" y="286" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="304" class="c">light_watts</text>
+<text x="1748" y="304" text-anchor="end" class="ty">INTEGER</text>
+<text x="1408" y="330" class="c">occupant_count</text>
+<text x="1748" y="330" text-anchor="end" class="ty">INTEGER</text>
+<rect x="1361" y="338" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="356" class="c">is_occupied</text>
+<text x="1748" y="356" text-anchor="end" class="ty">INTEGER</text>
+<text x="1408" y="382" class="c">light_on</text>
+<text x="1748" y="382" text-anchor="end" class="ty">INTEGER</text>
+<rect x="1361" y="390" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="408" class="c">light_mode</text>
+<text x="1748" y="408" text-anchor="end" class="ty">AUTO | FORCE_ON | FORCE_OFF</text>
+<text x="1408" y="434" class="c">last_activity_at</text>
+<text x="1748" y="434" text-anchor="end" class="ty">TEXT</text>
+<rect x="1361" y="442" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="460" class="c">updated_at</text>
+<text x="1748" y="460" text-anchor="end" class="ty">TEXT</text><rect x="40" y="560" width="400" height="234" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<path d="M40,570 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#7c3aed"/>
+<text x="240.0" y="589" text-anchor="middle" class="th">admins</text>
+<text x="52" y="624" class="k" fill="#b91c1c">PK</text>
+<text x="88" y="624" class="c" font-weight="700">id</text>
+<text x="428" y="624" text-anchor="end" class="ty">INTEGER</text>
+<rect x="41" y="632" width="398" height="26" fill="#f8fafc"/>
+<text x="52" y="650" class="k" fill="#047857">UQ</text>
+<text x="88" y="650" class="c">username</text>
+<text x="428" y="650" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="676" class="c">full_name</text>
+<text x="428" y="676" text-anchor="end" class="ty">TEXT</text>
+<rect x="41" y="684" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="702" class="c">password_hash</text>
+<text x="428" y="702" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="728" class="c">role</text>
+<text x="428" y="728" text-anchor="end" class="ty">SUPER_ADMIN | SECURITY | VIEWER</text>
+<rect x="41" y="736" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="754" class="c">is_active</text>
+<text x="428" y="754" text-anchor="end" class="ty">INTEGER</text>
+<text x="88" y="780" class="c">created_at</text>
+<text x="428" y="780" text-anchor="end" class="ty">TEXT</text><rect x="480" y="560" width="400" height="156" rx="10" fill="#fff" stroke="#7c3aed" stroke-width="2"/>
+<path d="M480,570 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#7c3aed"/>
+<text x="680.0" y="589" text-anchor="middle" class="th">admin_sessions</text>
+<text x="492" y="624" class="k" fill="#b91c1c">PK</text>
+<text x="528" y="624" class="c" font-weight="700">token_hash</text>
+<text x="868" y="624" text-anchor="end" class="ty">TEXT</text>
+<rect x="481" y="632" width="398" height="26" fill="#f8fafc"/>
+<text x="492" y="650" class="k" fill="#1d4ed8">FK</text>
+<text x="528" y="650" class="c">admin_id</text>
+<text x="868" y="650" text-anchor="end" class="ty">INTEGER</text>
+<text x="528" y="676" class="c">created_at</text>
+<text x="868" y="676" text-anchor="end" class="ty">TEXT</text>
+<rect x="481" y="684" width="398" height="26" fill="#f8fafc"/>
+<text x="528" y="702" class="c">expires_at</text>
+<text x="868" y="702" text-anchor="end" class="ty">TEXT</text><rect x="920" y="560" width="400" height="208" rx="10" fill="#fff" stroke="#d97706" stroke-width="2"/>
+<path d="M920,570 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#d97706"/>
+<text x="1120.0" y="589" text-anchor="middle" class="th">access_schedule</text>
+<text x="932" y="624" class="k" fill="#b91c1c">PK</text>
+<text x="968" y="624" class="c" font-weight="700">day_of_week</text>
+<text x="1308" y="624" text-anchor="end" class="ty">INTEGER 0-6</text>
+<rect x="921" y="632" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="650" class="c">is_open</text>
+<text x="1308" y="650" text-anchor="end" class="ty">INTEGER</text>
+<text x="968" y="676" class="c">open_time</text>
+<text x="1308" y="676" text-anchor="end" class="ty">HH:MM</text>
+<rect x="921" y="684" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="702" class="c">close_time</text>
+<text x="1308" y="702" text-anchor="end" class="ty">HH:MM</text>
+<text x="932" y="728" class="k" fill="#1d4ed8">FK</text>
+<text x="968" y="728" class="c">updated_by</text>
+<text x="1308" y="728" text-anchor="end" class="ty">INTEGER</text>
+<rect x="921" y="736" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="754" class="c">updated_at</text>
+<text x="1308" y="754" text-anchor="end" class="ty">TEXT</text><rect x="1360" y="560" width="400" height="286" rx="10" fill="#fff" stroke="#16a34a" stroke-width="2"/>
+<path d="M1360,570 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#16a34a"/>
+<text x="1560.0" y="589" text-anchor="middle" class="th">room_status_logs</text>
+<text x="1372" y="624" class="k" fill="#b91c1c">PK</text>
+<text x="1408" y="624" class="c" font-weight="700">id</text>
+<text x="1748" y="624" text-anchor="end" class="ty">INTEGER</text>
+<rect x="1361" y="632" width="398" height="26" fill="#f8fafc"/>
+<text x="1372" y="650" class="k" fill="#047857">UQ</text>
+<text x="1408" y="650" class="c">event_uuid</text>
+<text x="1748" y="650" text-anchor="end" class="ty">TEXT</text>
+<text x="1372" y="676" class="k" fill="#1d4ed8">FK</text>
+<text x="1408" y="676" class="c">room_id</text>
+<text x="1748" y="676" text-anchor="end" class="ty">INTEGER</text>
+<rect x="1361" y="684" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="702" class="c">occupant_count</text>
+<text x="1748" y="702" text-anchor="end" class="ty">INTEGER</text>
+<text x="1408" y="728" class="c">is_occupied</text>
+<text x="1748" y="728" text-anchor="end" class="ty">INTEGER</text>
+<rect x="1361" y="736" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="754" class="c">light_on</text>
+<text x="1748" y="754" text-anchor="end" class="ty">INTEGER</text>
+<text x="1408" y="780" class="c">trigger</text>
+<text x="1748" y="780" text-anchor="end" class="ty">TEXT</text>
+<rect x="1361" y="788" width="398" height="26" fill="#f8fafc"/>
+<text x="1408" y="806" class="c">occurred_at</text>
+<text x="1748" y="806" text-anchor="end" class="ty">TEXT</text>
+<text x="1408" y="832" class="c">received_at</text>
+<text x="1748" y="832" text-anchor="end" class="ty">TEXT</text><rect x="40" y="900" width="400" height="286" rx="10" fill="#fff" stroke="#64748b" stroke-width="2"/>
+<path d="M40,910 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#64748b"/>
+<text x="240.0" y="929" text-anchor="middle" class="th">devices</text>
+<text x="52" y="964" class="k" fill="#b91c1c">PK</text>
+<text x="88" y="964" class="c" font-weight="700">id</text>
+<text x="428" y="964" text-anchor="end" class="ty">INTEGER</text>
+<rect x="41" y="972" width="398" height="26" fill="#f8fafc"/>
+<text x="52" y="990" class="k" fill="#047857">UQ</text>
+<text x="88" y="990" class="c">device_code</text>
+<text x="428" y="990" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="1016" class="c">api_key_hash</text>
+<text x="428" y="1016" text-anchor="end" class="ty">TEXT</text>
+<rect x="41" y="1024" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="1042" class="c">firmware_version</text>
+<text x="428" y="1042" text-anchor="end" class="ty">TEXT</text>
+<text x="88" y="1068" class="c">ip_address</text>
+<text x="428" y="1068" text-anchor="end" class="ty">TEXT</text>
+<rect x="41" y="1076" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="1094" class="c">free_heap</text>
+<text x="428" y="1094" text-anchor="end" class="ty">INTEGER</text>
+<text x="88" y="1120" class="c">sd_free_kb</text>
+<text x="428" y="1120" text-anchor="end" class="ty">INTEGER</text>
+<rect x="41" y="1128" width="398" height="26" fill="#f8fafc"/>
+<text x="88" y="1146" class="c">pending_events</text>
+<text x="428" y="1146" text-anchor="end" class="ty">INTEGER</text>
+<text x="88" y="1172" class="c">last_seen_at</text>
+<text x="428" y="1172" text-anchor="end" class="ty">TEXT</text><rect x="480" y="900" width="400" height="208" rx="10" fill="#fff" stroke="#64748b" stroke-width="2"/>
+<path d="M480,910 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#64748b"/>
+<text x="680.0" y="929" text-anchor="middle" class="th">audit_log</text>
+<text x="492" y="964" class="k" fill="#b91c1c">PK</text>
+<text x="528" y="964" class="c" font-weight="700">id</text>
+<text x="868" y="964" text-anchor="end" class="ty">INTEGER</text>
+<rect x="481" y="972" width="398" height="26" fill="#f8fafc"/>
+<text x="528" y="990" class="c">actor_type</text>
+<text x="868" y="990" text-anchor="end" class="ty">ADMIN | DEVICE | SYSTEM</text>
+<text x="528" y="1016" class="c">actor_id</text>
+<text x="868" y="1016" text-anchor="end" class="ty">INTEGER</text>
+<rect x="481" y="1024" width="398" height="26" fill="#f8fafc"/>
+<text x="528" y="1042" class="c">action</text>
+<text x="868" y="1042" text-anchor="end" class="ty">TEXT</text>
+<text x="528" y="1068" class="c">details</text>
+<text x="868" y="1068" text-anchor="end" class="ty">JSON text</text>
+<rect x="481" y="1076" width="398" height="26" fill="#f8fafc"/>
+<text x="528" y="1094" class="c">created_at</text>
+<text x="868" y="1094" text-anchor="end" class="ty">TEXT</text><rect x="920" y="900" width="400" height="156" rx="10" fill="#fff" stroke="#d97706" stroke-width="2"/>
+<path d="M920,910 a10,10 0 0 1 10,-10 h380 a10,10 0 0 1 10,10 v34 h-400 z" fill="#d97706"/>
+<text x="1120.0" y="929" text-anchor="middle" class="th">system_settings</text>
+<text x="932" y="964" class="k" fill="#b91c1c">PK</text>
+<text x="968" y="964" class="c" font-weight="700">key</text>
+<text x="1308" y="964" text-anchor="end" class="ty">TEXT</text>
+<rect x="921" y="972" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="990" class="c">value</text>
+<text x="1308" y="990" text-anchor="end" class="ty">TEXT</text>
+<text x="968" y="1016" class="c">description</text>
+<text x="1308" y="1016" text-anchor="end" class="ty">TEXT</text>
+<rect x="921" y="1024" width="398" height="26" fill="#f8fafc"/>
+<text x="968" y="1042" class="c">updated_at</text>
+<text x="1308" y="1042" text-anchor="end" class="ty">TEXT</text>
+<g transform="translate(1360,900)">
+ <rect width="400" height="250" rx="10" fill="#f8fafc" stroke="#cbd5e1"/>
+ <text x="20" y="34" style="font-size:18px;font-weight:700;fill:#0f172a">Key</text>
+ <text x="20" y="66" class="k" fill="#b91c1c">PK</text><text x="60" y="66" class="c">primary key</text>
+ <text x="20" y="94" class="k" fill="#1d4ed8">FK</text><text x="60" y="94" class="c">foreign key</text>
+ <text x="20" y="122" class="k" fill="#047857">UQ</text><text x="60" y="122" class="c">unique (no duplicates)</text>
+ <text x="20" y="154" class="c">1 to N : one-to-many relationship</text>
+ <text x="20" y="186" class="ty">Partial unique index: one open visit</text>
+ <text x="20" y="206" class="ty">(time_out IS NULL) per user.</text>
+ <text x="20" y="232" class="ty">Views: v_people_inside, v_daily_access_summary</text>
+</g>
+</svg>

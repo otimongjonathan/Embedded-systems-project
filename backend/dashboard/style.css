@@ -1,0 +1,147 @@
+/* CoCIS dashboard: neutral colours, system fonts, works on a laptop and a phone. */
+:root {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --text: #1f2933;
+  --muted: #616e7c;
+  --line: #d9dee4;
+  --accent: #2f5d8a;
+  --green: #1e7b45;
+  --green-bg: #e3f4ea;
+  --red: #b42318;
+  --red-bg: #fde8e6;
+  --amber-bg: #fff4d6;
+  --radius: 8px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+[hidden] { display: none !important; }
+
+h1 { font-size: 1.4rem; margin: 0 0 4px; }
+h2 { font-size: 1.25rem; margin: 0 0 12px; }
+h3 { font-size: 1.05rem; margin: 22px 0 10px; }
+.card h3 { margin-top: 0; }
+code { background: #eef1f4; padding: 1px 5px; border-radius: 4px; }
+
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+
+/* ---------- login ---------- */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.login-card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
+.hint { font-size: 0.85rem; color: var(--muted); margin: 0; }
+
+/* ---------- layout ---------- */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 16px;
+}
+.brand { font-weight: 600; }
+.who { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.tabs {
+  display: flex; gap: 4px; padding: 0 16px; background: var(--card);
+  border-bottom: 1px solid var(--line); overflow-x: auto;
+}
+.tabs button {
+  background: none; border: none; border-bottom: 3px solid transparent; padding: 10px 12px;
+  font: inherit; color: var(--muted); cursor: pointer; white-space: nowrap;
+}
+.tabs button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+main { max-width: 1100px; margin: 0 auto; padding: 16px; }
+.row-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.stat-label { color: var(--muted); font-size: 0.9rem; }
+.stat-value { font-size: 2rem; font-weight: 600; }
+
+/* ---------- forms and buttons ---------- */
+label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; color: var(--muted); }
+label.inline { flex-direction: row; align-items: center; gap: 8px; }
+input, select {
+  font: inherit; color: var(--text); padding: 7px 9px; border: 1px solid var(--line);
+  border-radius: 6px; background: #fff;
+}
+input[type="checkbox"] { width: 18px; height: 18px; }
+
+.btn {
+  font: inherit; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--line);
+  background: #fff; color: var(--text); cursor: pointer;
+}
+.btn:hover { background: #f0f2f5; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn.small { padding: 4px 10px; font-size: 0.85rem; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: #244a6f; }
+.btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.danger:hover { background: #8f1c13; }
+.btn.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.form-grid .full { grid-column: 1 / -1; margin: 0; }
+
+/* ---------- messages and badges ---------- */
+.msg { padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
+.msg.error { background: var(--red-bg); color: var(--red); }
+.msg.ok { background: var(--green-bg); color: var(--green); }
+.banner {
+  background: var(--red); color: #fff; font-weight: 600; padding: 10px 14px;
+  border-radius: var(--radius); margin-bottom: 12px;
+}
+.badge {
+  display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.8rem;
+  background: #e6ebf0; color: var(--text); font-weight: 600;
+}
+.badge.green { background: var(--green-bg); color: var(--green); }
+.badge.red { background: var(--red-bg); color: var(--red); }
+.badge.amber { background: var(--amber-bg); color: #8a5a00; }
+
+/* ---------- rooms ---------- */
+.room-head { display: flex; justify-content: space-between; align-items: center; }
+.room-count { font-size: 1.8rem; font-weight: 600; }
+.room-lines p { margin: 4px 0; }
+.mode-buttons { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+
+/* ---------- tables ---------- */
+.table-wrap { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: #f8f9fb; font-weight: 600; font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
+tbody tr:last-child td { border-bottom: none; }
+td.empty { color: var(--muted); text-align: center; }
+td.details { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8rem; word-break: break-word; }
+tr.inactive td { color: var(--muted); }
+
+/* ---------- chart ---------- */
+.chart-card { margin-top: 16px; }
+#r-chart svg { width: 100%; max-width: 520px; height: auto; display: block; }
+
+@media (max-width: 600px) {
+  main { padding: 12px; }
+  .stat-value { font-size: 1.6rem; }
+  th, td { padding: 6px 8px; }
+}
+td.time { white-space: nowrap; }
+
+/* Database viewer */
+.db-controls { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 8px 0 12px; }
+.db-controls select { margin-left: 6px; }
+.db-controls .check { display: flex; align-items: center; gap: 6px; }
+#tab-database td { white-space: nowrap; font-size: 13px; }
+.new-row td { animation: new-row 6s ease-out; }
+@keyframes new-row { from { background: #fde68a; } to { background: transparent; } }
+.db-controls .check { flex-direction: row; }
+.db-controls .check input { width: auto; margin: 0; }

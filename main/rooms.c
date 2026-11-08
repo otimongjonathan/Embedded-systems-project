@@ -12,6 +12,9 @@ static void room_lighting_task(void *arg) {
     gpio_config_t io_conf = {
         .pin_bit_mask = (1ULL << PIN_PIR_R1) | (1ULL << PIN_PIR_R2),
         .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
     };
     gpio_config(&io_conf);
 
@@ -21,10 +24,16 @@ static void room_lighting_task(void *arg) {
     };
     gpio_config(&out_conf);
 
-    int r1_off_timer = 0;
-    int r2_off_timer = 0;
-    int last_r1_state = -1;
-    int last_r2_state = -1;
+    // Initial state: OFF (hold timer expired)
+    int r1_off_timer = HOLD_TICKS;
+    int r2_off_timer = HOLD_TICKS;
+    int last_r1_state = 0;
+    int last_r2_state = 0;
+
+    gpio_set_level(PIN_LIGHT_R1, 0);
+    gpio_set_level(PIN_LIGHT_R2, 0);
+    state_room_set(0, false, false);
+    state_room_set(1, false, false);
 
     for (;;) {
         bool r1_motion = gpio_get_level(PIN_PIR_R1);
@@ -40,10 +49,9 @@ static void room_lighting_task(void *arg) {
         // --- Room 1 Logic ---
         if (r1_motion) {
             r1_off_timer = 0;
-        } else if (r1_off_timer < 5) {
+        } else if (r1_off_timer < HOLD_TICKS) {
             r1_off_timer++;
         }
-        int r1_state = (r1_off_timer < 5) ? 1 : 0;
 
         if (r1_state != last_r1_state) {
             last_r1_state = r1_state;
@@ -65,10 +73,12 @@ static void room_lighting_task(void *arg) {
         // --- Room 2 Logic ---
         if (r2_motion) {
             r2_off_timer = 0;
-        } else if (r2_off_timer < 5) {
+        } else if (r2_off_timer < HOLD_TICKS) {
             r2_off_timer++;
         }
-        int r2_state = (r2_off_timer < 5) ? 1 : 0;
+
+        int r2_auto_state = (r2_off_timer < HOLD_TICKS) ? 1 : 0;
+        int r2_state = (s_override[1] != -1) ? s_override[1] : r2_auto_state;
 
         if (r2_state != last_r2_state) {
             last_r2_state = r2_state;
@@ -86,12 +96,12 @@ static void room_lighting_task(void *arg) {
             }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(100)); // Sample every 100ms for high responsiveness
     }
 }
 
 void rooms_init(void) {
-    // Initialization handled in task
+    // Initialized in task
 }
 
 void rooms_start(void) {

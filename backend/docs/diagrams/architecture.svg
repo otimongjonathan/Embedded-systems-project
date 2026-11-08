@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1080" viewBox="0 0 2000 1080" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs>
+<style>.t{font-size:25px;font-weight:700;fill:#0f172a}.h{font-size:19px;font-weight:700;fill:#0f172a}.b{font-size:16px;fill:#1e293b}.s{font-size:14px;fill:#475569}.l{font-size:15px;font-weight:700}.td{font-size:15px;fill:#0f172a}.th{font-size:15px;font-weight:700;fill:#000}</style>
+<rect width="2000" height="1080" fill="#fff"/>
+<text x="1000.0" y="46" text-anchor="middle" style="font-size:30px;font-weight:700;fill:#0f172a">CoCIS Smart Control and Monitoring System: Architecture</text>
+<rect x="30" y="80" width="420" height="970" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+<text x="240.0" y="116" text-anchor="middle" class="t">1. Field devices</text>
+<text x="240.0" y="140" text-anchor="middle" class="s">Wokwi parts</text>
+<rect x="50" y="160" width="380" height="149" rx="9" fill="#eff6ff" stroke="#2563eb" stroke-width="1.8"/>
+<text x="64" y="187" class="h">Main entrance</text>
+<text x="64" y="210" class="b">MFRC522 RFID reader: entry lane</text>
+<text x="64" y="231" class="b">MFRC522 RFID reader: exit lane</text>
+<text x="64" y="252" class="b">Servo: entry door, servo: exit door</text>
+<text x="64" y="273" class="b">Green and red LED, buzzer</text>
+<text x="64" y="294" class="b">LCD 16x2 (I2C)</text>
+<rect x="50" y="331" width="380" height="65" rx="9" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
+<text x="64" y="358" class="h">Lecture Room 1</text>
+<text x="64" y="381" class="b">PIR motion sensor, room light</text>
+<rect x="50" y="418" width="380" height="65" rx="9" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.8"/>
+<text x="64" y="445" class="h">Lecture Room 2</text>
+<text x="64" y="468" class="b">PIR motion sensor, room light</text>
+<rect x="50" y="505" width="380" height="107" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="1.8"/>
+<text x="64" y="532" class="h">Storage</text>
+<text x="64" y="555" class="b">microSD card: access.csv log</text>
+<text x="64" y="576" class="b">NVS flash: cards, people inside,</text>
+<text x="64" y="597" class="b">schedule (survive a reboot)</text>
+<rect x="50" y="634" width="380" height="65" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="1.8"/>
+<text x="64" y="661" class="h">Serial monitor</text>
+<text x="64" y="684" class="b">Console menu, admin PIN login</text>
+<rect x="510" y="80" width="540" height="970" rx="16" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+<text x="780.0" y="116" text-anchor="middle" class="t">2. ESP32 controller</text>
+<text x="780.0" y="140" text-anchor="middle" class="s">one board, ESP-IDF and FreeRTOS</text>
+<rect x="530" y="160" width="500" height="62" rx="9" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="548" y="187" class="h">rfid task (priority 6)</text><text x="548" y="209" class="s">reads both readers, decides, logs, publishes</text>
+<rect x="530" y="234" width="500" height="62" rx="9" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+<text x="548" y="261" class="h">door task (priority 4)</text><text x="548" y="283" class="s">opens a servo for 3 s (door queue)</text>
+<rect x="530" y="308" width="500" height="62" rx="9" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+<text x="548" y="335" class="h">room_lights task (priority 4)</text><text x="548" y="357" class="s">PIR every 100 ms, lights, 5 s hold</text>
+<rect x="530" y="382" width="500" height="62" rx="9" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="548" y="409" class="h">console task (priority 3)</text><text x="548" y="431" class="s">commands, admin PIN, schedule, cards</text>
+<rect x="530" y="456" width="500" height="62" rx="9" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+<text x="548" y="483" class="h">MQTT client (esp-mqtt)</text><text x="548" y="505" class="s">Wi-Fi, publishes JSON, receives commands</text>
+<rect x="530" y="530" width="500" height="62" rx="9" fill="#fff" stroke="#64748b" stroke-dasharray="6 4"/>
+<text x="780" y="557" text-anchor="middle" class="h">Shared state</text><text x="780" y="579" text-anchor="middle" class="s">state mutex, storage mutex, door queue</text>
+<text x="780" y="622" text-anchor="middle" class="h">Access decision rules (state.c)</text>
+<rect x="530" y="636" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="660" class="th">#</text><text x="590" y="660" class="th">Condition</text><text x="930" y="660" class="th">Result</text>
+<rect x="530" y="672" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="696" class="td">1</text><text x="590" y="696" class="td">Lockdown active</text><text x="930" y="696" class="td">Deny</text>
+<rect x="530" y="708" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="732" class="td">2</text><text x="590" y="732" class="td">Card not authorised</text><text x="930" y="732" class="td">Deny</text>
+<rect x="530" y="744" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="768" class="td">3</text><text x="590" y="768" class="td">Entry outside schedule</text><text x="930" y="768" class="td">Deny</text>
+<rect x="530" y="780" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="804" class="td">4</text><text x="590" y="804" class="td">Entry, already inside</text><text x="930" y="804" class="td">Deny</text>
+<rect x="530" y="816" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="840" class="td">5</text><text x="590" y="840" class="td">Exit, not inside</text><text x="930" y="840" class="td">Deny</text>
+<rect x="530" y="852" width="500" height="36" fill="#fff" stroke="#000"/>
+<text x="546" y="876" class="td">6</text><text x="590" y="876" class="td">Otherwise (exit after hours too)</text><text x="930" y="876" class="td">Open</text>
+<line x1="576" y1="636" x2="576" y2="888" stroke="#000"/><line x1="916" y1="636" x2="916" y2="888" stroke="#000"/>
+<rect x="1110" y="80" width="320" height="970" rx="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+<text x="1270.0" y="116" text-anchor="middle" class="t">3. Internet</text>
+<text x="1270.0" y="140" text-anchor="middle" class="s">public MQTT broker</text>
+<rect x="1130" y="230" width="280" height="191" rx="9" fill="#fff" stroke="#64748b" stroke-width="1.8"/>
+<text x="1144" y="257" class="h">broker.hivemq.com</text>
+<text x="1144" y="280" class="b">port 1883</text>
+<text x="1144" y="301" class="b"></text>
+<text x="1144" y="322" class="b">cocis/event/access</text>
+<text x="1144" y="343" class="b">cocis/state/occupancy</text>
+<text x="1144" y="364" class="b">cocis/state/room1, room2</text>
+<text x="1144" y="385" class="b">cocis/config/schedule</text>
+<text x="1144" y="406" class="b">cocis/cmd/entrance</text>
+<rect x="1490" y="80" width="480" height="970" rx="16" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>
+<text x="1730.0" y="116" text-anchor="middle" class="t">4. Server (laptop)</text>
+<text x="1730.0" y="140" text-anchor="middle" class="s">start.bat and bridge.bat</text>
+<rect x="1510" y="160" width="440" height="107" rx="9" fill="#fff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="1524" y="187" class="h">MQTT bridge</text>
+<text x="1524" y="210" class="b">Python, paho-mqtt</text>
+<text x="1524" y="231" class="b">Message to API call, stable ids</text>
+<text x="1524" y="252" class="b">Lockdown to the ESP32</text>
+<rect x="1510" y="370" width="440" height="128" rx="9" fill="#fff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="1524" y="397" class="h">REST API (FastAPI)</text>
+<text x="1524" y="420" class="b">Device endpoints: X-Device-Key</text>
+<text x="1524" y="441" class="b">Staff endpoints: token and roles</text>
+<text x="1524" y="462" class="b">Pydantic models validate input</text>
+<text x="1524" y="483" class="b">Rules, transactions, audit log</text>
+<rect x="1510" y="590" width="320" height="107" rx="9" fill="#fdf4ff" stroke="#a21caf" stroke-width="1.8"/>
+<text x="1524" y="617" class="h">SQLite database</text>
+<text x="1524" y="640" class="b">11 tables, 2 views</text>
+<text x="1524" y="661" class="b">access_events, building_visits,</text>
+<text x="1524" y="682" class="b">room_status_logs, users, ...</text>
+<rect x="1510" y="800" width="440" height="86" rx="9" fill="#fff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="1524" y="827" class="h">Staff in a browser</text>
+<text x="1524" y="850" class="b">Dashboard (live, Database tab)</text>
+<text x="1524" y="871" class="b">Swagger UI (API documentation)</text>
+<path d="M430,234 L530,191" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,363 L530,330" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,450 L530,350" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,558 L530,560" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M430,666 L530,420" stroke="#334155" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<path d="M1030,487 L1130,400" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="1080" y="490" text-anchor="middle" class="l" fill="#7c3aed">MQTT</text>
+<text x="1080" y="508" text-anchor="middle" class="l" fill="#7c3aed">Wi-Fi</text>
+<path d="M1410,270 L1510,213" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)" marker-start="url(#a)"/>
+<text x="1460" y="225" text-anchor="middle" class="l" fill="#7c3aed">MQTT</text>
+<path d="M1650,267 L1650,370" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<text x="1685" y="315" text-anchor="middle" class="l" fill="#7c3aed">HTTP</text>
+<path d="M1650,498 L1650,590" stroke="#a21caf" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<text x="1680" y="550" text-anchor="middle" class="l" fill="#a21caf">SQL</text>
+<path d="M1890,800 L1890,498" stroke="#7c3aed" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<text x="1925" y="650" text-anchor="middle" class="l" fill="#7c3aed">HTTP</text>
+<text x="1925" y="668" text-anchor="middle" class="l" fill="#7c3aed">token</text>
+</svg>

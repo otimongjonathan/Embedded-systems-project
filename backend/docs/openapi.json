@@ -1,0 +1,2107 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CoCIS Smart Control & Monitoring API",
+    "description": "\nDatabase API for the ESP32 access-control, occupancy and lighting system\n(Embedded Systems coursework, Makerere University, 2026/2027).\n\nStaff dashboard (live occupancy, lights, schedule, users, reports): open [/dashboard](/dashboard/).\n\n## How to test it here\n\n1. Click **Authorize** (top right, padlock icon).\n2. Under **AdminLogin** enter username `admin` and password `Admin@CoCIS2026`\n   (leave client_id and client_secret empty) and click **Authorize**.\n3. Under **DeviceKey** enter `esp32-demo-key-change-me` and click **Authorize**. Close the dialog.\n4. Open any endpoint, click **Try it out**, then **Execute**. The example bodies are ready to send.\n\nA good first run: `POST /api/v1/device/access/check` (Lisa Nyonyozi scans in),\nthen `GET /api/v1/occupancy` (she is listed as inside).\nChange `event_uuid` before sending a scan again: a repeated `event_uuid` is treated as a\nduplicate upload and returns the first answer with `\"duplicate\": true`.\n\n## Demo data\n\n| What | Value |\n|------|-------|\n| Admin login (SUPER_ADMIN) | `admin` / `Admin@CoCIS2026` |\n| ESP32 device key | `esp32-demo-key-change-me` |\n| RFID tags | `A1B2C3D4` student, `11223344` lecturer, `DEADBEEF` security, `CAFEBABE` visitor |\n| Opening hours | Mon to Fri 07:00 to 22:00, Sat 08:00 to 17:00, Sun closed |\n\nScans outside the opening hours are refused with `OUTSIDE_SCHEDULE`, so keep `occurred_at` on a weekday at 09:00.\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/device/access/check": {
+      "post": {
+        "tags": [
+          "Device (ESP32)"
+        ],
+        "summary": "Access Check",
+        "description": "Online path: the ESP32 sends a scan, the server decides, records it and\nanswers in one transaction. The ESP32 opens the door only on GRANTED.",
+        "operationId": "access_check_api_v1_device_access_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessCheck"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/device/rooms/status": {
+      "post": {
+        "tags": [
+          "Device (ESP32)"
+        ],
+        "summary": "Room Status",
+        "description": "A person crossed a lecture-room doorway (IR beams), or the lights changed.",
+        "operationId": "room_status_api_v1_device_rooms_status_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomStatus"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/device/events/batch": {
+      "post": {
+        "tags": [
+          "Device (ESP32)"
+        ],
+        "summary": "Upload Batch",
+        "description": "Offline path: records queued on the SD card while Wi-Fi was down.\nThe decision was already made by the ESP32, so we store it as-is.\nDuplicate event_uuids are skipped, so re-sending a batch is always safe.",
+        "operationId": "upload_batch_api_v1_device_events_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/device/config": {
+      "get": {
+        "tags": [
+          "Device (ESP32)"
+        ],
+        "summary": "Device Config",
+        "description": "Everything the ESP32 caches on its SD card to decide offline.",
+        "operationId": "device_config_api_v1_device_config_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/device/heartbeat": {
+      "post": {
+        "tags": [
+          "Device (ESP32)"
+        ],
+        "summary": "Heartbeat",
+        "description": "Periodic 'I am alive'. Reply tells the ESP32 whether to re-download config.",
+        "operationId": "heartbeat_api_v1_device_heartbeat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Heartbeat"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceKey": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Login",
+        "description": "Log in with a JSON body and receive a bearer token (used by Postman and the firmware).\nThe example body is the demo account, so **Try it out** then **Execute** works as it is.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Token",
+        "description": "Form login used by the **Authorize** button in Swagger UI. Enter\n`admin` / `Admin@CoCIS2026` there and every locked endpoint is then sent with the token.",
+        "operationId": "token_api_v1_auth_token_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_token_api_v1_auth_token_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "List Users",
+        "operationId": "list_users_api_v1_users_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Role"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Active"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Create User",
+        "operationId": "create_user_api_v1_users_post",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/users/{user_id}": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Get User",
+        "operationId": "get_user_api_v1_users__user_id__get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Update User",
+        "operationId": "update_user_api_v1_users__user_id__patch",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Deactivate User",
+        "description": "Soft delete: the tag stops working but history is kept for the records.",
+        "operationId": "deactivate_user_api_v1_users__user_id__delete",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/occupancy": {
+      "get": {
+        "tags": [
+          "Occupancy"
+        ],
+        "summary": "Occupancy",
+        "operationId": "occupancy_api_v1_occupancy_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/access-events": {
+      "get": {
+        "tags": [
+          "Occupancy"
+        ],
+        "summary": "Access Events",
+        "operationId": "access_events_api_v1_access_events_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "name": "door",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Door"
+            }
+          },
+          {
+            "name": "decision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Decision"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/visits": {
+      "get": {
+        "tags": [
+          "Occupancy"
+        ],
+        "summary": "Visits",
+        "operationId": "visits_api_v1_visits_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms": {
+      "get": {
+        "tags": [
+          "Rooms & Lighting"
+        ],
+        "summary": "Rooms",
+        "operationId": "rooms_api_v1_rooms_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/rooms/{code}/history": {
+      "get": {
+        "tags": [
+          "Rooms & Lighting"
+        ],
+        "summary": "Room History",
+        "operationId": "room_history_api_v1_rooms__code__history_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rooms/{code}/light-mode": {
+      "put": {
+        "tags": [
+          "Rooms & Lighting"
+        ],
+        "summary": "Set Light Mode",
+        "description": "Manual override, e.g. force LR1 lights off during a power-saving period.\nAUTO returns control to the IR beam occupancy counter. The ESP32 picks this up on its next config pull.",
+        "operationId": "set_light_mode_api_v1_rooms__code__light_mode_put",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Code"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LightMode"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/schedule": {
+      "get": {
+        "tags": [
+          "Schedule & Settings"
+        ],
+        "summary": "Get Schedule",
+        "operationId": "get_schedule_api_v1_schedule_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Schedule & Settings"
+        ],
+        "summary": "Put Schedule",
+        "operationId": "put_schedule_api_v1_schedule_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/settings": {
+      "get": {
+        "tags": [
+          "Schedule & Settings"
+        ],
+        "summary": "Get Settings",
+        "operationId": "get_settings_api_v1_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Schedule & Settings"
+        ],
+        "summary": "Patch Settings",
+        "operationId": "patch_settings_api_v1_settings_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/settings/emergency": {
+      "put": {
+        "tags": [
+          "Schedule & Settings"
+        ],
+        "summary": "Emergency",
+        "description": "Fire / evacuation: unlock every door regardless of schedule.",
+        "operationId": "emergency_api_v1_settings_emergency_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmergencyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/reports/daily": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Daily Report",
+        "operationId": "daily_report_api_v1_reports_daily_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/devices": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Devices",
+        "operationId": "devices_api_v1_devices_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ]
+      }
+    },
+    "/api/v1/audit-log": {
+      "get": {
+        "tags": [
+          "Reports"
+        ],
+        "summary": "Audit Log",
+        "operationId": "audit_log_api_v1_audit_log_get",
+        "security": [
+          {
+            "AdminLogin": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessCheck": {
+        "properties": {
+          "event_uuid": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Event Uuid",
+            "examples": [
+              "01-000123"
+            ]
+          },
+          "rfid_uid": {
+            "type": "string",
+            "pattern": "^[0-9A-Fa-f]{8,20}$",
+            "title": "Rfid Uid",
+            "examples": [
+              "A1B2C3D4"
+            ]
+          },
+          "door": {
+            "type": "string",
+            "enum": [
+              "ENTRY",
+              "EXIT"
+            ],
+            "title": "Door",
+            "examples": [
+              "ENTRY"
+            ]
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At",
+            "description": "Must fall inside the schedule, e.g. a weekday at 09:00",
+            "examples": [
+              "2026-10-30T09:00:00"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_uuid",
+          "rfid_uid",
+          "door",
+          "occurred_at"
+        ],
+        "title": "AccessCheck"
+      },
+      "Body_token_api_v1_auth_token_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_token_api_v1_auth_token_post"
+      },
+      "EmergencyUpdate": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "examples": [
+              true
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 3,
+            "title": "Reason",
+            "examples": [
+              "Fire drill"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "reason"
+        ],
+        "title": "EmergencyUpdate"
+      },
+      "EventBatch": {
+        "properties": {
+          "access_events": {
+            "items": {
+              "$ref": "#/components/schemas/OfflineAccessEvent"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Access Events"
+          },
+          "room_events": {
+            "items": {
+              "$ref": "#/components/schemas/RoomStatus"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "title": "Room Events"
+          }
+        },
+        "type": "object",
+        "title": "EventBatch"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Heartbeat": {
+        "properties": {
+          "firmware_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Firmware Version",
+            "examples": [
+              "1.0.0"
+            ]
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address",
+            "examples": [
+              "10.13.37.2"
+            ]
+          },
+          "free_heap": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Free Heap",
+            "examples": [
+              182000
+            ]
+          },
+          "sd_free_kb": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sd Free Kb",
+            "examples": [
+              950000
+            ]
+          },
+          "pending_events": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Events",
+            "default": 0,
+            "examples": [
+              0
+            ]
+          }
+        },
+        "type": "object",
+        "title": "Heartbeat"
+      },
+      "LightMode": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "FORCE_ON",
+              "FORCE_OFF"
+            ],
+            "title": "Mode",
+            "examples": [
+              "AUTO"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "LightMode"
+      },
+      "Login": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username",
+            "examples": [
+              "admin"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "examples": [
+              "Admin@CoCIS2026"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Login"
+      },
+      "OfflineAccessEvent": {
+        "properties": {
+          "event_uuid": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Event Uuid",
+            "examples": [
+              "01-000123"
+            ]
+          },
+          "rfid_uid": {
+            "type": "string",
+            "pattern": "^[0-9A-Fa-f]{8,20}$",
+            "title": "Rfid Uid",
+            "examples": [
+              "A1B2C3D4"
+            ]
+          },
+          "door": {
+            "type": "string",
+            "enum": [
+              "ENTRY",
+              "EXIT"
+            ],
+            "title": "Door",
+            "examples": [
+              "ENTRY"
+            ]
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At",
+            "description": "Must fall inside the schedule, e.g. a weekday at 09:00",
+            "examples": [
+              "2026-10-30T09:00:00"
+            ]
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "GRANTED",
+              "DENIED"
+            ],
+            "title": "Decision",
+            "examples": [
+              "GRANTED"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "OK",
+              "UNKNOWN_TAG",
+              "INACTIVE_USER",
+              "OUTSIDE_SCHEDULE",
+              "ALREADY_INSIDE",
+              "NOT_INSIDE",
+              "EMERGENCY_OPEN"
+            ],
+            "title": "Reason",
+            "examples": [
+              "OK"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_uuid",
+          "rfid_uid",
+          "door",
+          "occurred_at",
+          "decision",
+          "reason"
+        ],
+        "title": "OfflineAccessEvent"
+      },
+      "RoomStatus": {
+        "properties": {
+          "event_uuid": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 8,
+            "title": "Event Uuid",
+            "examples": [
+              "01-R00001"
+            ]
+          },
+          "room_code": {
+            "type": "string",
+            "enum": [
+              "LR1",
+              "LR2"
+            ],
+            "title": "Room Code",
+            "examples": [
+              "LR1"
+            ]
+          },
+          "occupant_count": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Occupant Count",
+            "description": "People in the room, from the IR beam counter",
+            "examples": [
+              12
+            ]
+          },
+          "light_on": {
+            "type": "boolean",
+            "title": "Light On",
+            "examples": [
+              true
+            ]
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "PERSON_IN",
+              "PERSON_OUT",
+              "COUNT_RESET",
+              "MANUAL_OVERRIDE",
+              "SCHEDULE",
+              "EMERGENCY"
+            ],
+            "title": "Trigger",
+            "examples": [
+              "PERSON_IN"
+            ]
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At",
+            "examples": [
+              "2026-10-30T09:05:00"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "event_uuid",
+          "room_code",
+          "occupant_count",
+          "light_on",
+          "trigger",
+          "occurred_at"
+        ],
+        "title": "RoomStatus"
+      },
+      "ScheduleDay": {
+        "properties": {
+          "day_of_week": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Day Of Week",
+            "description": "0 = Sunday to 6 = Saturday",
+            "examples": [
+              1
+            ]
+          },
+          "is_open": {
+            "type": "boolean",
+            "title": "Is Open",
+            "examples": [
+              true
+            ]
+          },
+          "open_time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Open Time",
+            "examples": [
+              "07:00"
+            ]
+          },
+          "close_time": {
+            "type": "string",
+            "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+            "title": "Close Time",
+            "examples": [
+              "22:00"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "day_of_week",
+          "is_open",
+          "open_time",
+          "close_time"
+        ],
+        "title": "ScheduleDay"
+      },
+      "ScheduleUpdate": {
+        "properties": {
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleDay"
+            },
+            "type": "array",
+            "maxItems": 7,
+            "minItems": 1,
+            "title": "Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "days"
+        ],
+        "title": "ScheduleUpdate"
+      },
+      "SettingsUpdate": {
+        "properties": {
+          "light_off_delay_s": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3600.0,
+                "minimum": 10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Light Off Delay S",
+            "examples": [
+              30
+            ]
+          },
+          "heartbeat_interval_s": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3600.0,
+                "minimum": 10.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat Interval S",
+            "examples": [
+              60
+            ]
+          }
+        },
+        "type": "object",
+        "title": "SettingsUpdate"
+      },
+      "UserCreate": {
+        "properties": {
+          "rfid_uid": {
+            "type": "string",
+            "pattern": "^[0-9A-Fa-f]{8,20}$",
+            "title": "Rfid Uid",
+            "examples": [
+              "99AA88BB"
+            ]
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Full Name",
+            "examples": [
+              "Test Student"
+            ]
+          },
+          "reg_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reg Number",
+            "examples": [
+              "24/U/0001"
+            ]
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "examples": [
+              "test.student@students.mak.ac.ug"
+            ]
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "STUDENT",
+              "STAFF",
+              "LECTURER",
+              "SECURITY",
+              "VISITOR"
+            ],
+            "title": "Role",
+            "default": "STUDENT"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department",
+            "examples": [
+              "Computer Science"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "rfid_uid",
+          "full_name"
+        ],
+        "title": "UserCreate"
+      },
+      "UserUpdate": {
+        "properties": {
+          "rfid_uid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-Fa-f]{8,20}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rfid Uid"
+          },
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "reg_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reg Number"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "STUDENT",
+                  "STAFF",
+                  "LECTURER",
+                  "SECURITY",
+                  "VISITOR"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "UserUpdate"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "DeviceKey": {
+        "type": "apiKey",
+        "description": "ESP32 device key. Demo value: esp32-demo-key-change-me",
+        "in": "header",
+        "name": "X-Device-Key"
+      },
+      "AdminLogin": {
+        "type": "oauth2",
+        "description": "Management login. Demo account: admin / Admin@CoCIS2026",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "/api/v1/auth/token"
+          }
+        }
+      }
+    }
+  }
+}

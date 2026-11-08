@@ -1,0 +1,5 @@
+# Wokwi for VS Code: run "idf.py build", then "Wokwi: Start Simulator"
+[wokwi]
+version = 1
+firmware = 'build/cocis_firmware.bin'
+elf = 'build/cocis_firmware.elf'

@@ -47,6 +47,7 @@ static void rc522_w(rc522_t *d, uint8_t r, uint8_t v) {
     spi_transaction_t t = { .length = 16, .tx_buffer = tx };
     spi_device_transmit(d->spi, &t);
 }
+
 static uint8_t rc522_r(rc522_t *d, uint8_t r) {
     uint8_t tx[2] = { (uint8_t)(((r << 1) & 0x7E) | 0x80), 0 }, rx[2] = {0};
     spi_transaction_t t = { .length = 16, .tx_buffer = tx, .rx_buffer = rx };
@@ -69,6 +70,7 @@ static void rc522_init(rc522_t *d, spi_device_handle_t spi, gpio_num_t rst) {
     if (!(v & 0x03)) v |= 0x03;
     rc522_w(d, REG_TX_CONTROL, v);
 }
+
 static int transceive(rc522_t *d, uint8_t *tx, int txlen, uint8_t fr,
                       uint8_t *rx, int *rxlen, int wait_ms) {
     rc522_w(d, REG_COMMAND,    CMD_IDLE);
@@ -107,6 +109,7 @@ static int transceive(rc522_t *d, uint8_t *tx, int txlen, uint8_t fr,
     }
     return 0;
 }
+
 static int read_uid(rc522_t *d, uint8_t uid[4]) {
     // Retry 3 times to overcome Wokwi timing glitches
     for (int attempt = 0; attempt < 3; attempt++) {
@@ -123,6 +126,7 @@ static int read_uid(rc522_t *d, uint8_t uid[4]) {
     }
     return -1;
 }
+
 static uint32_t uid_to_u32(const uint8_t u[4]) {
     return ((uint32_t)u[0] << 24) | ((uint32_t)u[1] << 16) |
            ((uint32_t)u[2] << 8)  |  (uint32_t)u[3];
@@ -199,6 +203,32 @@ static void handle_scan(rc522_t *d, bool is_entry) {
     d->last_tag = tag; d->last_scan = now;
 
     process_valid_tag(tag, is_entry);
+}
+
+static void handle_scan(rc522_t *d, bool is_entry) {
+    if (!d) return;
+    uint8_t uid[4];
+    
+    int res = read_uid(d, uid);
+    if (res != 0) {
+        if (res == -1) return;
+
+        static TickType_t last_err = 0;
+        TickType_t now = xTaskGetTickCount();
+        if (now - last_err > pdMS_TO_TICKS(3000)) {
+            ESP_LOGW(TAG, "RFID protocol read failed: %d", res);
+            last_err = now;
+        }
+        return;
+    }
+    
+    uint32_t tag = uid_to_u32(uid);
+
+    TickType_t now = xTaskGetTickCount();
+    if (tag == d->last_tag && (now - d->last_scan) < pdMS_TO_TICKS(SCAN_COOLDOWN_MS)) return;
+    d->last_tag = tag; d->last_scan = now;
+
+    rfid_trigger_scan(tag, is_entry);
 }
 
 static void rfid_task(void *arg) {

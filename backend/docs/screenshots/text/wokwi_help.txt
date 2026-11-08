@@ -1,0 +1,22 @@
+> help
+=========== CoCIS serial menu ===========
+ status                 everything at a glance
+ inside                 who is in the building
+ rooms                  lecture rooms: people and lights
+ log                    last 20 scans
+ schedule               opening hours in use
+ tags                   cards known for offline use
+ outbox                 events waiting for upload
+ sync                   upload now and download the config
+ offline on|off         simulate losing the network
+ server <url>           API base, e.g. https://x.ngrok-free.app/api/v1
+ tap <UID> entry|exit   simulate a card tap
+ walk LR1|LR2 in|out    simulate a person crossing a room door
+ time <YYYY-MM-DDTHH:MM:SS>  set the clock by hand (normally NTP or the API)
+ -- staff only (login first) --
+ login <user> <pass>    e.g. login admin Admin@CoCIS2026
+ setday <0-6> <HH:MM> <HH:MM> | setday <0-6> closed   (0 = Sunday)
+ emergency on|off <reason>
+ light LR1|LR2 AUTO|FORCE_ON|FORCE_OFF
+ logout
+=========================================

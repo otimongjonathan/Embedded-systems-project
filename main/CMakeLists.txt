@@ -14,7 +14,7 @@ idf_component_register(
     EMBED_FILES "web/index.html"
     REQUIRES
         driver esp_wifi esp_netif esp_event
-        nvs_flash mqtt json
+        nvs_flash mqtt cjson
         fatfs sdmmc
         esp_driver_i2c
         esp_http_server

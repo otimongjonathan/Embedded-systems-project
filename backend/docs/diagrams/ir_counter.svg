@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#15803d"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+    <style>.t{font-size:20px;font-weight:700;fill:#0f172a}.b{font-size:17px;fill:#1e293b}.s{font-size:15px;fill:#475569}</style>
+  </defs>
+  <rect width="1600" height="760" fill="#fff"/>
+  <text x="800" y="44" text-anchor="middle" style="font-size:26px;font-weight:700;fill:#0f172a">Lecture-room occupancy: infrared break-beam people counter (plan view of the door)</text>
+
+  <!-- room / corridor -->
+  <rect x="60" y="90" width="760" height="270" fill="#f0fdf4"/>
+  <text x="440" y="130" text-anchor="middle" class="t" fill="#15803d">LECTURE ROOM (inside)</text>
+  <rect x="60" y="440" width="760" height="270" fill="#f8fafc"/>
+  <text x="440" y="690" text-anchor="middle" class="t">CORRIDOR (outside)</text>
+  <!-- wall with door gap -->
+  <rect x="60" y="360" width="250" height="80" fill="#94a3b8"/>
+  <rect x="570" y="360" width="250" height="80" fill="#94a3b8"/>
+  <text x="440" y="406" text-anchor="middle" class="s">doorway</text>
+  <!-- beams -->
+  <rect x="290" y="368" width="20" height="20" fill="#dc2626"/><rect x="570" y="368" width="20" height="20" fill="#1e293b"/>
+  <line x1="310" y1="378" x2="570" y2="378" stroke="#dc2626" stroke-width="4" stroke-dasharray="10 6"/>
+  <text x="250" y="384" text-anchor="end" class="b" font-weight="700">Beam B (room side)</text>
+  <rect x="290" y="412" width="20" height="20" fill="#dc2626"/><rect x="570" y="412" width="20" height="20" fill="#1e293b"/>
+  <line x1="310" y1="422" x2="570" y2="422" stroke="#dc2626" stroke-width="4" stroke-dasharray="10 6"/>
+  <text x="250" y="428" text-anchor="end" class="b" font-weight="700">Beam A (corridor side)</text>
+  <text x="300" y="470" text-anchor="middle" class="s">IR emitter</text><text x="580" y="470" text-anchor="middle" class="s">IR receiver</text>
+  <!-- walkers -->
+  <path d="M400,600 L400,190" stroke="#15803d" stroke-width="5" marker-end="url(#g)"/>
+  <text x="375" y="300" text-anchor="end" style="font-size:17px;font-weight:700;fill:#15803d">A then B</text>
+  <text x="375" y="322" text-anchor="end" style="font-size:16px;fill:#15803d">PERSON_IN (+1)</text>
+  <path d="M480,190 L480,600" stroke="#b91c1c" stroke-width="5" marker-end="url(#r)"/>
+  <text x="505" y="520" style="font-size:17px;font-weight:700;fill:#b91c1c">B then A</text>
+  <text x="505" y="542" style="font-size:16px;fill:#b91c1c">PERSON_OUT (-1)</text>
+
+  <!-- logic panel -->
+  <rect x="880" y="90" width="680" height="620" rx="14" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+  <text x="1220" y="130" text-anchor="middle" class="t">Lighting task logic (per room)</text>
+  <rect x="910" y="155" width="620" height="110" rx="10" fill="#dcfce7" stroke="#16a34a"/>
+  <text x="930" y="188" class="b" font-weight="700">If count &gt; 0: room OCCUPIED, lights ON</text>
+  <text x="930" y="216" class="s">Stays ON however still people are (exams, lectures),</text>
+  <text x="930" y="240" class="s">because occupancy is counted at the door, not from movement.</text>
+  <rect x="910" y="282" width="620" height="90" rx="10" fill="#fee2e2" stroke="#dc2626"/>
+  <text x="930" y="315" class="b" font-weight="700">If count = 0 for 30 s: lights OFF</text>
+  <text x="930" y="343" class="s">The short delay stops lights flickering if someone steps out and back.</text>
+  <rect x="910" y="389" width="620" height="170" rx="10" fill="#fff" stroke="#94a3b8"/>
+  <text x="930" y="420" class="b" font-weight="700">Safeguards against counting errors</text>
+  <text x="930" y="448" class="s">1. The count never goes below 0</text>
+  <text x="930" y="474" class="s">2. Both beams must break in order within 1.5 s</text>
+  <text x="930" y="500" class="s">3. Counts reset to 0 at closing time</text>
+  <text x="930" y="526" class="s">4. Counts reset to 0 when the main entrance shows</text>
+  <text x="954" y="548" class="s">nobody inside the building</text>
+  <rect x="910" y="576" width="620" height="110" rx="10" fill="#ede9fe" stroke="#7c3aed"/>
+  <text x="930" y="608" class="b" font-weight="700">Every change is reported to the API</text>
+  <text x="930" y="636" class="s">POST /device/rooms/status with the count, light state and trigger</text>
+  <text x="930" y="662" class="s">Stored in rooms (live state) and room_status_logs (history)</text>
+</svg>

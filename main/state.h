@@ -12,7 +12,7 @@ typedef enum {
     RES_DENIED_NOT_IN
 } result_t;
 
-extern bool g_lockdown_active; // <--- NEW: Global lockdown flag
+extern bool g_lockdown_active;
 
 const char *state_result_str(result_t r);
 
@@ -22,6 +22,13 @@ void state_persist(void);
 int  state_occupancy(void);
 int  state_inside_count(void);
 uint32_t state_inside_at(int idx);
+
+/* Dynamic Authorized Users */
+bool     state_user_add(uint32_t tag);
+bool     state_user_remove(uint32_t tag);
+int      state_user_count(void);
+uint32_t state_user_at(int idx);
+bool     state_user_is_authorized(uint32_t tag);
 
 void state_get_schedule(int *start, int *end);
 void state_set_schedule(int start, int end);

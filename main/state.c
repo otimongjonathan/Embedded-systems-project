@@ -10,6 +10,8 @@ typedef struct {
     int      occupancy;
     uint32_t inside[INSIDE_MAX];
     int      inside_n;
+    uint32_t auth_tags[AUTH_USERS_MAX];
+    int      auth_tags_n;
     int      sched_start;
     int      sched_end;
     bool     admin;
@@ -57,6 +59,20 @@ void state_init(void) {
     memcpy(s.inside, tags, n * sizeof(uint32_t));
     s.inside_n  = n;
     s.occupancy = n;
+
+    // Load or initialize authorized users
+    uint32_t u_tags[AUTH_USERS_MAX]; int u_n = 0;
+    storage_load_users(u_tags, &u_n);
+    if (u_n == 0) {
+        for (size_t i = 0; i < N_DEFAULT_AUTH && i < AUTH_USERS_MAX; i++) {
+            u_tags[i] = DEFAULT_AUTHORIZED_TAGS[i];
+        }
+        u_n = (int)N_DEFAULT_AUTH;
+        storage_save_users(u_tags, u_n);
+    }
+    if (u_n > AUTH_USERS_MAX) u_n = AUTH_USERS_MAX;
+    memcpy(s.auth_tags, u_tags, u_n * sizeof(uint32_t));
+    s.auth_tags_n = u_n;
 }
 
 void state_persist(void) {
@@ -65,19 +81,25 @@ void state_persist(void) {
     int n  = s.inside_n;
     uint32_t tags[INSIDE_MAX];
     memcpy(tags, s.inside, n * sizeof(uint32_t));
+
+    int un = s.auth_tags_n;
+    uint32_t utags[AUTH_USERS_MAX];
+    memcpy(utags, s.auth_tags, un * sizeof(uint32_t));
     xSemaphoreGive(s.mtx);
+
     storage_save_schedule(st, en);
     storage_save_inside(tags, n);
+    storage_save_users(utags, un);
 }
 
-int  state_occupancy(void) {
+int state_occupancy(void) {
     xSemaphoreTake(s.mtx, portMAX_DELAY);
     int v = s.occupancy;
     xSemaphoreGive(s.mtx);
     return v;
 }
 
-int  state_inside_count(void) {
+int state_inside_count(void) {
     xSemaphoreTake(s.mtx, portMAX_DELAY);
     int v = s.inside_n;
     xSemaphoreGive(s.mtx);
@@ -89,6 +111,82 @@ uint32_t state_inside_at(int idx) {
     uint32_t v = (idx >= 0 && idx < s.inside_n) ? s.inside[idx] : 0;
     xSemaphoreGive(s.mtx);
     return v;
+}
+
+bool state_user_add(uint32_t tag) {
+    if (tag == 0) return false;
+    xSemaphoreTake(s.mtx, portMAX_DELAY);
+    for (int i = 0; i < s.auth_tags_n; i++) {
+        if (s.auth_tags[i] == tag) {
+            xSemaphoreGive(s.mtx);
+            return false; // Already authorized
+        }
+    }
+    if (s.auth_tags_n >= AUTH_USERS_MAX) {
+        xSemaphoreGive(s.mtx);
+        return false; // List full
+    }
+    s.auth_tags[s.auth_tags_n++] = tag;
+    int un = s.auth_tags_n;
+    uint32_t utags[AUTH_USERS_MAX];
+    memcpy(utags, s.auth_tags, un * sizeof(uint32_t));
+    xSemaphoreGive(s.mtx);
+
+    storage_save_users(utags, un);
+    return true;
+}
+
+bool state_user_remove(uint32_t tag) {
+    xSemaphoreTake(s.mtx, portMAX_DELAY);
+    int idx = -1;
+    for (int i = 0; i < s.auth_tags_n; i++) {
+        if (s.auth_tags[i] == tag) {
+            idx = i;
+            break;
+        }
+    }
+    if (idx < 0) {
+        xSemaphoreGive(s.mtx);
+        return false;
+    }
+    for (int i = idx; i < s.auth_tags_n - 1; i++) {
+        s.auth_tags[i] = s.auth_tags[i + 1];
+    }
+    s.auth_tags_n--;
+    int un = s.auth_tags_n;
+    uint32_t utags[AUTH_USERS_MAX];
+    memcpy(utags, s.auth_tags, un * sizeof(uint32_t));
+    xSemaphoreGive(s.mtx);
+
+    storage_save_users(utags, un);
+    return true;
+}
+
+int state_user_count(void) {
+    xSemaphoreTake(s.mtx, portMAX_DELAY);
+    int n = s.auth_tags_n;
+    xSemaphoreGive(s.mtx);
+    return n;
+}
+
+uint32_t state_user_at(int idx) {
+    xSemaphoreTake(s.mtx, portMAX_DELAY);
+    uint32_t tag = (idx >= 0 && idx < s.auth_tags_n) ? s.auth_tags[idx] : 0;
+    xSemaphoreGive(s.mtx);
+    return tag;
+}
+
+bool state_user_is_authorized(uint32_t tag) {
+    xSemaphoreTake(s.mtx, portMAX_DELAY);
+    bool ok = false;
+    for (int i = 0; i < s.auth_tags_n; i++) {
+        if (s.auth_tags[i] == tag) {
+            ok = true;
+            break;
+        }
+    }
+    xSemaphoreGive(s.mtx);
+    return ok;
 }
 
 void state_get_schedule(int *start, int *end) {
@@ -112,11 +210,16 @@ result_t state_evaluate(uint32_t tag, bool is_entry, time_t now) {
 
     struct tm tm; localtime_r(&now, &tm);
     int mod = tm.tm_hour * 60 + tm.tm_min;
-    bool known = false;
-    for (size_t i = 0; i < N_AUTH; i++)
-        if (AUTHORIZED_TAGS[i] == tag) { known = true; break; }
 
     xSemaphoreTake(s.mtx, portMAX_DELAY);
+    bool known = false;
+    for (int i = 0; i < s.auth_tags_n; i++) {
+        if (s.auth_tags[i] == tag) {
+            known = true;
+            break;
+        }
+    }
+
     result_t res;
     if (!known) {
         res = RES_DENIED_UNKNOWN;

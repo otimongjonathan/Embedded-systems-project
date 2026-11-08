@@ -1,0 +1,42 @@
+--- 2. Lisa enters the building (online decision by the API) ---
+> tap A1B2C3D4 entry
+[09:00:01] ENTRY A1B2C3D4 Lisa Nyonyozi: GRANTED OK (API), door opens for 3 s
+
+--- 3. Anti-passback: the same card again at the entry is refused ---
+> tap A1B2C3D4 entry
+[09:00:03] ENTRY A1B2C3D4 Lisa Nyonyozi: DENIED ALREADY_INSIDE (API), door stays shut
+
+--- 4. An unknown card is refused ---
+> tap 0BADCAFE entry
+[09:00:03] ENTRY 0BADCAFE Unknown card: DENIED UNKNOWN_TAG (API), door stays shut
+
+--- 5. Two people walk into Lecture Room 1, one leaves (IR beams) ---
+> walk LR1 in
+[LR1] person in, now 1 inside, lights ON
+> walk LR1 in
+[LR1] person in, now 2 inside, lights ON
+> walk LR1 out
+[LR1] person out, now 1 inside, lights ON
+> rooms
+  LR1  1 people  lights ON
+  LR2  0 people  lights off
+
+--- 6. Wi-Fi is lost: the ESP32 keeps working on its own ---
+> offline on
+Network OFF (simulated): scans are decided locally and queued
+> tap 11223344 entry
+[09:00:06] ENTRY 11223344 Dr. Mary Lecturer: GRANTED OK (offline), door opens for 3 s
+> walk LR2 in
+[LR2] person in, now 1 inside, lights ON
+> outbox
+2 events waiting for upload (simulator/sd/outbox.csv)
+
+--- 7. Wi-Fi is back: the queue is uploaded with no duplicates ---
+> offline off
+Network back ON
+[sync] uploaded 2 queued events (0 already known), 0 left
+> sync
+[sync] config version 1 downloaded and saved to the SD card
+> outbox
+0 events waiting for upload (simulator/sd/outbox.csv)
+

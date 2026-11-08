@@ -29,6 +29,7 @@ static bool parse_hhmm(const char *s, int *out) {
 static void cmd_help(void) {
     con_printf("\nCommands:\n"
         "  help | status | occupancy | who | logs <n>\n"
+        "  scan <in|out> <HEX>                             [simulate swipe]\n"
         "  login <user> <pin> | logout\n"
         "  schedule show | schedule set <HH:MM> <HH:MM>  [admin]\n"
         "  simulate in | simulate out                    [TEST SYSTEM]\n"
@@ -41,17 +42,25 @@ static void cmd_status(void) {
     char iso[32]; strftime(iso, sizeof(iso), "%Y-%m-%d %H:%M:%S", &tm);
     int st, en; state_get_schedule(&st, &en);
     room_state_t r1, r2; state_room_get(0, &r1); state_room_get(1, &r2);
+
+    int o1 = rooms_get_override(1);
+    int o2 = rooms_get_override(2);
+    const char *m1 = (o1 == 1) ? "[FORCED ON]" : ((o1 == 0) ? "[FORCED OFF]" : "[AUTO]");
+    const char *m2 = (o2 == 1) ? "[FORCED ON]" : ((o2 == 0) ? "[FORCED OFF]" : "[AUTO]");
     
     con_printf("\n[STATUS]\n"
         "  time      : %s\n"
         "  schedule  : %02d:%02d - %02d:%02d\n"
         "  occupancy : %d\n"
         "  admin     : %s\n"
-        "  room1     : occ=%d lights=%d\n"
-        "  room2     : occ=%d lights=%d\n",
+        "  users     : %d\n"
+        "  room1     : occ=%d lights=%d %s\n"
+        "  room2     : occ=%d lights=%d %s\n",
         iso, st/60, st%60, en/60, en%60,
         state_occupancy(), state_admin_active() ? "ACTIVE" : "none",
-        r1.occupied, r1.lights, r2.occupied, r2.lights);
+        state_user_count(),
+        r1.occupied, r1.lights, m1,
+        r2.occupied, r2.lights, m2);
 }
 
 static void cmd_who(void) {
@@ -70,6 +79,89 @@ static void handle_command(char *line) {
     else if (!strcmp(tok, "status"))   cmd_status();
     else if (!strcmp(tok, "who"))      cmd_who();
     else if (!strcmp(tok, "occupancy")) con_printf("Occupancy: %d\n", state_occupancy());
+    else if (!strcmp(tok, "scan")) {
+        char *dir = strtok_r(NULL, " \t", &save);
+        char *hex = strtok_r(NULL, " \t", &save);
+        if (!dir || !hex) {
+            con_printf("ERR: usage: scan <in|out> <HEX_TAG>\n");
+            return;
+        }
+        bool is_entry = false;
+        if (!strcmp(dir, "in") || !strcmp(dir, "entry") || !strcmp(dir, "en")) {
+            is_entry = true;
+        } else if (!strcmp(dir, "out") || !strcmp(dir, "exit") || !strcmp(dir, "ex")) {
+            is_entry = false;
+        } else {
+            con_printf("ERR: specify direction 'in' or 'out'\n");
+            return;
+        }
+        uint32_t tag = (uint32_t)strtoul(hex, NULL, 16);
+        if (tag == 0) {
+            con_printf("ERR: invalid hex tag\n");
+            return;
+        }
+        rfid_trigger_scan(tag, is_entry);
+    }
+    else if (!strcmp(tok, "user")) {
+        char *sub = strtok_r(NULL, " \t", &save);
+        if (!sub || !strcmp(sub, "list")) {
+            int n = state_user_count();
+            con_printf("\nAuthorized Users (%d):\n", n);
+            for (int i = 0; i < n; i++) {
+                con_printf("  [%d] %08lX\n", i + 1, (unsigned long)state_user_at(i));
+            }
+        } else if (!strcmp(sub, "add")) {
+            if (!state_admin_active()) { con_printf("ERR: admin required\n"); return; }
+            char *hex = strtok_r(NULL, " \t", &save);
+            if (!hex) { con_printf("ERR: usage: user add <HEX_TAG>\n"); return; }
+            uint32_t tag = (uint32_t)strtoul(hex, NULL, 16);
+            if (tag == 0) { con_printf("ERR: invalid hex tag\n"); return; }
+            if (state_user_add(tag)) {
+                con_printf("OK: user %08lX added\n", (unsigned long)tag);
+            } else {
+                con_printf("ERR: already exists or user list full\n");
+            }
+        } else if (!strcmp(sub, "remove") || !strcmp(sub, "del")) {
+            if (!state_admin_active()) { con_printf("ERR: admin required\n"); return; }
+            char *hex = strtok_r(NULL, " \t", &save);
+            if (!hex) { con_printf("ERR: usage: user remove <HEX_TAG>\n"); return; }
+            uint32_t tag = (uint32_t)strtoul(hex, NULL, 16);
+            if (tag == 0) { con_printf("ERR: invalid hex tag\n"); return; }
+            if (state_user_remove(tag)) {
+                con_printf("OK: user %08lX removed\n", (unsigned long)tag);
+            } else {
+                con_printf("ERR: user not found\n");
+            }
+        } else {
+            con_printf("ERR: usage: user list | user add <HEX> | user remove <HEX>\n");
+        }
+    }
+    else if (!strcmp(tok, "lights")) {
+        char *room_str = strtok_r(NULL, " \t", &save);
+        char *act = strtok_r(NULL, " \t", &save);
+        if (!room_str || !act) {
+            con_printf("ERR: usage: lights <room1|room2> <on|off|auto>\n");
+            return;
+        }
+        if (!state_admin_active()) { con_printf("ERR: admin required\n"); return; }
+        int r_num = 0;
+        if (!strcmp(room_str, "room1") || !strcmp(room_str, "1")) r_num = 1;
+        else if (!strcmp(room_str, "room2") || !strcmp(room_str, "2")) r_num = 2;
+        else { con_printf("ERR: specify room1 or room2\n"); return; }
+
+        if (!strcmp(act, "on")) {
+            rooms_set_override(r_num, 1);
+            con_printf("OK: Room %d lights FORCED ON\n", r_num);
+        } else if (!strcmp(act, "off")) {
+            rooms_set_override(r_num, 0);
+            con_printf("OK: Room %d lights FORCED OFF\n", r_num);
+        } else if (!strcmp(act, "auto")) {
+            rooms_set_override(r_num, -1);
+            con_printf("OK: Room %d set to AUTO (PIR sensor mode)\n", r_num);
+        } else {
+            con_printf("ERR: usage: lights <room1|room2> <on|off|auto>\n");
+        }
+    }
     else if (!strcmp(tok, "schedule")) {
         char *t2 = strtok_r(NULL, " \t", &save);
         if (t2 && !strcmp(t2, "set")) {
