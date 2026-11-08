@@ -38,6 +38,8 @@ result_t state_evaluate(uint32_t tag, bool is_entry, time_t now);
 bool state_admin_active(void);
 bool state_admin_login(const char *pin);
 void state_admin_logout(void);
+void state_set_lockdown(bool active);
+bool state_lockdown_active(void);
 
 typedef struct { bool occupied; bool lights; } room_state_t;
 void state_room_get(int room, room_state_t *out);

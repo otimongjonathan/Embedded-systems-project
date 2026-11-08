@@ -22,7 +22,7 @@ static void lcd_send_nibble(uint8_t nibble, bool is_data) {
     uint8_t low  = data | rs | bl;
     
     i2c_master_transmit(dev_handle, &high, 1, 1000);
-    esp_rom_delay_us(1000); // Exact hardware delay needed for the LCD
+    esp_rom_delay_us(1000);
     i2c_master_transmit(dev_handle, &low, 1, 1000);
     esp_rom_delay_us(1000);
 }
@@ -71,27 +71,27 @@ void lcd_init(void) {
     };
     i2c_master_bus_add_device(bus_handle, &dev_cfg, &dev_handle);
 
-    vTaskDelay(pdMS_TO_TICKS(100)); // Wait for LCD power-up
+    vTaskDelay(pdMS_TO_TICKS(100));
 
-    // The absolute standard HD44780 wake-up sequence
     lcd_send_nibble(0x03, false); vTaskDelay(pdMS_TO_TICKS(5));
     lcd_send_nibble(0x03, false); vTaskDelay(pdMS_TO_TICKS(1));
     lcd_send_nibble(0x03, false);
-    lcd_send_nibble(0x02, false); // Set to 4-bit mode
+    lcd_send_nibble(0x02, false);
 
-    // Configuration
-    lcd_send_cmd(0x28); // 2 lines, 5x8 font
-    lcd_send_cmd(0x08); // Display OFF
-    lcd_send_cmd(0x01); // Clear display
+    lcd_send_cmd(0x28);
+    lcd_send_cmd(0x08);
+    lcd_send_cmd(0x01);
     vTaskDelay(pdMS_TO_TICKS(2));
-    lcd_send_cmd(0x06); // Increment cursor
-    lcd_send_cmd(0x0C); // Display ON
+    lcd_send_cmd(0x06);
+    lcd_send_cmd(0x0C);
 }
 
 void lcd_update_idle(int occupancy) {
     char line1[17], line2[17];
     snprintf(line1, sizeof(line1), " CoCIS Security ");
-    snprintf(line2, sizeof(line2), "Occupancy: %d   ", occupancy);
+    // FIX: Changed text so it doesn't exceed 16 characters
+    snprintf(line2, sizeof(line2), "Scan card: %d   ", occupancy); 
+    
     lcd_put_cur(0, 0); lcd_send_string(line1);
     lcd_put_cur(1, 0); lcd_send_string(line2);
 }

@@ -16,11 +16,11 @@
 #define PIN_LED_RED      14
 #define PIN_BUZZER       27
 
-/* Room Pins */
+/* Room Pins (Updated for Relays) */
 #define PIN_PIR_R1       34
-#define PIN_LIGHT_R1     26
+#define PIN_LIGHT_R1     17  // Relay 1
 #define PIN_PIR_R2       35
-#define PIN_LIGHT_R2     25
+#define PIN_LIGHT_R2     32  // Relay 2
 
 /* Network */
 #define WIFI_SSID        "Wokwi-GUEST"
@@ -35,13 +35,19 @@
 #define TOPIC_ROOM1      "cocis/state/room1"
 #define TOPIC_ROOM2      "cocis/state/room2"
 
-/* Authorized tags */
-#define AUTH_USERS_MAX   64
-static const uint32_t DEFAULT_AUTHORIZED_TAGS[] = { 0x11223344, 0x01020304 };
-#define N_DEFAULT_AUTH   (sizeof(DEFAULT_AUTHORIZED_TAGS)/sizeof(DEFAULT_AUTHORIZED_TAGS[0]))
+/* Missing Topics added for your custom comms.c */
+#define TOPIC_EVENT_HISTORY "cocis/event/history"
+#define TOPIC_LOCKDOWN      "cocis/state/lockdown"
+#define TOPIC_COMMAND       "cocis/cmd/entrance"
+
+/* Authorized tags (11:22:33:44) */
+static const uint32_t AUTHORIZED_TAGS[] = { 0x11223344, 0x01020304 };
+#define N_AUTH (sizeof(AUTHORIZED_TAGS)/sizeof(AUTHORIZED_TAGS[0]))
 
 /* Limits */
 #define INSIDE_MAX       16
 #define ADMIN_TTL_S      300
 #define DOOR_OPEN_MS     3000
 #define SCAN_COOLDOWN_MS 1500
+#define ACCESS_START_MIN  (7 * 60)
+#define ACCESS_END_MIN    (22 * 60)

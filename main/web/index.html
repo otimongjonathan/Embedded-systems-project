@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CoCIS Entrance</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b1220; --card:#141f33; --line:#263754; --text:#e8eef8; --muted:#91a1bb; --good:#35d07f; --bad:#ff647c; --accent:#68a8ff; }
+    * { box-sizing:border-box; } body { margin:0; font:15px system-ui,sans-serif; background:var(--bg); color:var(--text); }
+    main { max-width:1100px; margin:auto; padding:24px; } header { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:22px; }
+    h1 { margin:0; font-size:clamp(24px,4vw,36px); } h2 { font-size:17px; margin:0 0 16px; } .muted { color:var(--muted); }
+    .connection { color:var(--good); } .connection.off { color:var(--bad); }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; } .wide { grid-column:span 2; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+    .value { font-size:30px; font-weight:700; margin-top:5px; } .label { color:var(--muted); }
+    .room { display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--line); } .room:first-of-type { border:0; }
+    .pill { border-radius:999px; padding:4px 9px; font-size:12px; background:#243553; } .pill.good { color:#081c11; background:var(--good); } .pill.bad { color:#2b0710; background:var(--bad); }
+    table { width:100%; border-collapse:collapse; } th,td { text-align:left; padding:10px 6px; border-bottom:1px solid var(--line); font-size:13px; } th { color:var(--muted); }
+    input,button { border:1px solid var(--line); border-radius:8px; padding:9px 11px; background:#0f192a; color:var(--text); } button { cursor:pointer; background:#20559b; border-color:#3979c9; } button.danger { background:#912d43; border-color:#c8465e; }
+    form { display:flex; flex-wrap:wrap; gap:8px; align-items:end; } form label { display:grid; gap:5px; color:var(--muted); font-size:12px; } #notice { min-height:20px; color:var(--accent); margin:12px 0; }
+    .login-fields { display:contents; } .login-fields[hidden] { display:none; }
+    @media (max-width:760px) { main { padding:15px; } .grid { grid-template-columns:1fr 1fr; } .wide { grid-column:span 2; } header { align-items:flex-start; flex-direction:column; } }
+    @media (max-width:450px) { .grid { grid-template-columns:1fr; } .wide { grid-column:span 1; } }
+  </style>
+</head>
+<body>
+<main>
+  <header><div><h1>CoCIS Entrance</h1><span class="muted">Live access and room monitor</span></div><div id="connection" class="connection">● Connecting</div></header>
+  <div id="notice"></div>
+  <section class="grid">
+    <article class="card"><div class="label">People inside</div><div id="occupancy" class="value">—</div></article>
+    <article class="card"><div class="label">Access schedule</div><div id="schedule" class="value">—</div></article>
+    <article class="card"><div class="label">System mode</div><div id="mode" class="value">—</div></article>
+    <article class="card"><div class="label">Access log</div><div id="log" class="value">—</div></article>
+    <article class="card wide"><h2>Rooms</h2><div id="rooms"></div></article>
+    <article class="card wide"><h2>Administrator <span id="admin" class="pill bad">Locked</span></h2>
+      <form id="login"><span id="loginFields" class="login-fields"><label>PIN<input id="pin" type="password" inputmode="numeric" maxlength="16" required></label><button>Sign in</button></span><button type="button" id="lockdown" class="danger">Lockdown</button></form>
+      <form id="scheduleForm" style="margin-top:14px"><label>Start<input id="start" type="time" required></label><label>End<input id="end" type="time" required></label><button>Save schedule</button></form>
+    </article>
+    <article class="card wide"><h2>Recent access events</h2><div style="overflow:auto"><table><thead><tr><th>Time</th><th>Card</th><th>Direction</th><th>Result</th></tr></thead><tbody id="events"></tbody></table></div></article>
+  </section>
+</main>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const notice = text => { $('notice').textContent = text; setTimeout(() => { if ($('notice').textContent === text) $('notice').textContent = ''; }, 3500); };
+  const post = async (url, body) => { const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)}); if (!r.ok) throw new Error(await r.text()); return r.json(); };
+  const minutes = value => String(Math.floor(value/60)).padStart(2,'0') + ':' + String(value%60).padStart(2,'0');
+  const embedded = location.protocol !== 'http:' || !['localhost','127.0.0.1'].includes(location.hostname);
+  const mqttMode = !embedded && typeof mqtt !== 'undefined';
+  const mqttState = { client:null, status:null, events:[], clientId:'cocis-dashboard-' + Math.random().toString(16).slice(2) };
+  const topic = {
+    occupancy:'cocis/state/occupancy',
+    schedule:'cocis/config/schedule',
+    room1:'cocis/state/room1',
+    room2:'cocis/state/room2',
+    event:'cocis/event/access',
+    history:'cocis/state/access-log',
+    lockdown:'cocis/state/lockdown',
+    command:'cocis/cmd/entrance',
+    reply:'cocis/response/entrance/' + mqttState.clientId
+  };
+  function mqttConnect() {
+    mqttState.client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt', {clientId:mqttState.clientId});
+    mqttState.client.on('connect', () => {
+      const subscriptions = Object.values(topic).filter(t => t !== topic.command);
+      mqttState.client.subscribe(subscriptions, error => {
+        if (error) {
+          $('connection').textContent = '● MQTT subscribe failed';
+          $('connection').className = 'connection off';
+          notice('MQTT subscription failed: ' + error.message);
+        } else {
+          notice('Connected to MQTT; waiting for access history');
+        }
+      });
+      $('connection').textContent = '● Live (MQTT)';
+      $('connection').className = 'connection';
+    });
+    mqttState.client.on('message', (name, payload) => {
+      try {
+        const data = JSON.parse(payload.toString());
+        if (name === topic.occupancy) mqttState.status = {...mqttState.status, occupancy:data.count};
+        if (name === topic.schedule) mqttState.status = {...mqttState.status, schedule:{start:parseTime(data.start), end:parseTime(data.end)}};
+        if (name === topic.lockdown) mqttState.status = {...mqttState.status, lockdown:data.active};
+        if (name === topic.room1) mqttState.status = {...mqttState.status, rooms:[data, ...(mqttState.status?.rooms || []).slice(1)]};
+        if (name === topic.room2) mqttState.status = {...mqttState.status, rooms:[...(mqttState.status?.rooms || [{},{}]).slice(0,1), data]};
+        if (name === topic.event) mqttState.events = [data, ...mqttState.events].slice(0,20);
+        if (name === topic.reply) {
+          if (data.command === 'LOGIN') mqttState.status = {...mqttState.status, admin:data.ok};
+          if (data.command === 'LOCKDOWN') mqttState.status = {...mqttState.status, lockdown:data.lockdown};
+          notice(data.ok ? (data.command === 'LOGIN' ? 'Signed in' : data.command === 'SCHEDULE' ? 'Schedule saved' : 'Lockdown updated') : (data.command === 'LOGIN' ? 'Incorrect PIN' : 'Command rejected; sign in again if needed'));
+        }
+        if (name === topic.history && Array.isArray(data)) {
+          mqttState.events = data.map(e => ({...e, direction:e.direction || e.dir}));
+          notice(`Received ${mqttState.events.length} saved access events`);
+        }
+        render(mqttState.status, mqttState.events);
+      } catch (_) { notice('Received invalid MQTT data'); }
+    });
+    mqttState.client.on('error', error => {
+      $('connection').textContent = '● MQTT unavailable';
+      $('connection').className = 'connection off';
+      notice('MQTT error: ' + error.message);
+    });
+    mqttState.client.on('close', () => {
+      $('connection').textContent = '● Offline';
+      $('connection').className = 'connection off';
+    });
+  }
+  const parseTime = value => { const [h,m] = String(value).split(':').map(Number); return h*60+m; };
+  function render(s, events) {
+    if (!s) return;
+    $('occupancy').textContent = `${s.occupancy ?? 0} / ${s.capacity ?? '—'}`;
+    if (s.schedule) $('schedule').textContent = `${minutes(s.schedule.start)}–${minutes(s.schedule.end)}`;
+    $('mode').textContent = s.lockdown ? 'LOCKDOWN' : 'Normal';
+    $('mode').style.color = s.lockdown ? 'var(--bad)' : 'var(--good)';
+    $('admin').textContent = s.admin ? 'Signed in' : 'Locked';
+    $('loginFields').hidden = !!s.admin;
+    if (s.access_log_ready !== undefined) {
+      $('log').textContent = s.access_log_ready ? 'SD card ready' : 'SD card missing';
+      $('log').style.color = s.access_log_ready ? 'var(--good)' : 'var(--bad)';
+    }
+    if (s.rooms) $('rooms').innerHTML = s.rooms.map((r,i) => `<div class="room"><b>Room ${i+1}</b><span><span class="pill ${r.occupied?'good':''}">${r.occupied?'Occupied':'Empty'}</span> <span class="pill ${r.lights?'good':''}">Lights ${r.lights?'ON':'OFF'}</span></span></div>`).join('');
+    if (s.schedule) { $('start').value = minutes(s.schedule.start); $('end').value = minutes(s.schedule.end); }
+    $('events').innerHTML = events.map(e => `<tr><td>${e.ts ? new Date(e.ts*1000).toLocaleTimeString() : '—'}</td><td>${e.tag || '—'}</td><td>${e.direction || e.dir || '—'}</td><td>${e.result || '—'}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">No events yet</td></tr>';
+  }
+  async function refresh() {
+    if (mqttMode) return;
+    try {
+      const [s, events] = await Promise.all([fetch('/api/status').then(r=>r.json()), fetch('/api/events').then(r=>r.json())]);
+      $('connection').textContent = '● Live'; $('connection').className = 'connection';
+      render(s, events);
+    } catch (e) { $('connection').textContent = '● Offline'; $('connection').className = 'connection off'; }
+  }
+  $('login').onsubmit = async e => {
+    e.preventDefault();
+    if (mqttMode) {
+      if (!mqttState.client?.connected) return notice('MQTT is not connected');
+      mqttState.client.publish(topic.command, JSON.stringify({command:'LOGIN',pin:$('pin').value,clientId:mqttState.clientId}), {qos:1});
+      $('pin').value = '';
+      notice('Checking PIN...');
+      return;
+    }
+    try { await post('/api/login',{pin:$('pin').value}); $('pin').value=''; notice('Signed in'); refresh(); }
+    catch (error) { notice(error.message.includes('403') ? 'Administrator login required' : 'Cannot reach the ESP32 dashboard API'); }
+  };
+  $('lockdown').onclick = async () => {
+    if (mqttMode) {
+      if (!mqttState.client?.connected) return notice('MQTT is not connected');
+      if (!mqttState.status?.admin) return notice('Sign in before changing lockdown');
+      mqttState.client.publish(topic.command, JSON.stringify({command:'LOCKDOWN',active:!mqttState.status.lockdown,clientId:mqttState.clientId}), {qos:1});
+      notice('Updating lockdown...');
+      return;
+    }
+    try { const s = await fetch('/api/status').then(r=>r.json()); await post('/api/lockdown',{active:!s.lockdown}); notice(s.lockdown?'Lockdown lifted':'Lockdown enabled'); refresh(); } catch (_) { notice('Cannot reach the ESP32 dashboard API'); }
+  };
+  $('scheduleForm').onsubmit = async e => {
+    e.preventDefault(); const toMin = v => { const [h,m]=v.split(':').map(Number); return h*60+m; };
+    if (mqttMode) {
+      if (!mqttState.client?.connected) return notice('MQTT is not connected');
+      if (!mqttState.status?.admin) return notice('Sign in before changing the schedule');
+      mqttState.client.publish(topic.command, JSON.stringify({command:'SCHEDULE',start:toMin($('start').value),end:toMin($('end').value),clientId:mqttState.clientId}), {qos:1});
+      notice('Saving schedule...');
+      return;
+    }
+    try { await post('/api/schedule',{start:toMin($('start').value),end:toMin($('end').value)}); notice('Schedule saved'); refresh(); } catch (_) { notice('Cannot reach the ESP32 dashboard API'); }
+  };
+  if (mqttMode) mqttConnect(); else { refresh(); setInterval(refresh, 2000); }
+</script>
+</body>
+</html>

@@ -1,4 +1,8 @@
 [wokwi]
 version = 1
 elf = "build/entrance.elf"
-firmware = "build/merged-firmware.bin"
+firmware = "build/entrance.bin"
+
+[[sdcard]]
+folder = "sdcard"
+writeback = true
